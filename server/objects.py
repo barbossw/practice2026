@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import overload
 import constants
 import math
 
@@ -7,10 +8,51 @@ class Pair:
     first : float
     second : float
 
+    @overload
+    def __mul__(self, other: "Pair") -> float: ...
+
+    @overload
+    def __mul__(self, other: float) -> "Pair": ...
+
+    @overload
+    def __mul__(self, other: int) -> "Pair": ...
+
+    def __mul__(self, other):
+        if isinstance(other, Pair):
+              return self.first * other.first + self.second * other.second
+        elif isinstance(other, (int, float)):
+             return Pair(
+                  self.first * other,
+                  self.second * other
+             )
+        return NotImplemented
+    
+    def __rmul__(self, other):
+         return self.__mul__(other)
+    
+    
+    def __add__(self, other : "Pair") -> "Pair":
+         return Pair(
+            self.first + other.first,
+            self.second + other.second,
+        )
+    
+    def __sub__(self, other : "Pair") -> "Pair":
+         return Pair(
+            self.first - other.first,
+            self.second - other.second,
+        )
+         
+    def length(self) -> float:
+         return math.hypot(self.first, self.second)
+
+
+
 def normalize_vector(vector : Pair) -> Pair:
         length = math.sqrt(vector.first ** 2 + vector.second ** 2)
         new_vector = Pair(vector.first / length, vector.second / length)
         return new_vector
+
 
 
 @dataclass
