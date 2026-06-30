@@ -19,7 +19,6 @@ class Puck:
     speed : float
     speed_vector : Pair
 
-    MASS : int = constants.PUCK_MASS
     RADIUS : int = constants.PUCK_RADIUS
 
     def __init__(self, position : Pair, speed : int, speed_vector : Pair):
@@ -38,7 +37,6 @@ class Player:
      speed : float
      speed_vector : Pair
 
-     MASS = constants.PLAYER_MASS
      RADIUS = constants.PLAYER_RADIUS
 
      def __init__(self, position : Pair, speed : float, speed_vector : Pair):
