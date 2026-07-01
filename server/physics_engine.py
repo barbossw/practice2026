@@ -44,6 +44,20 @@ def calculate_puck_wall_collision(puck : Puck):
            puck.position.first >= (GOAL_RIGHT - PUCK_RADIUS))):
         normal_vector_from_wall = Pair(0, 1)
         new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
-    
+
     return new_puck_speed_vector
+
+
+def checking_goal(puck : Puck):
+    if ((puck.position.second < (DOWN_WALL - PUCK_RADIUS) and  #в нижних воротах
+        puck.position.first >= (LEFT_WALL + PUCK_RADIUS) and
+        puck.position.first <= (RIGHT_WALL - PUCK_RADIUS))
+        ):
+        pass #слать инфу о голе player2
+
+    elif ((puck.position.second > (TOP_WALL + PUCK_RADIUS) and  #в верхних воротах
+        puck.position.first >= (LEFT_WALL + PUCK_RADIUS) and
+        puck.position.first <= (RIGHT_WALL - PUCK_RADIUS))
+        ):
+        pass #слать инфу о голе player1
 
