@@ -24,6 +24,7 @@ def calculate_player_puck_collision(player : Player, puck : Puck) -> tuple[float
 
 def calculate_puck_wall_collision(puck : Puck):
     puck_speed_vector = puck.speed_vector * puck.speed
+    new_puck_speed_vector =  puck_speed_vector
     if ((puck.position.first <= (LEFT_WALL + PUCK_RADIUS)) or           #проверка на коллизию с левой стенкой
         ((puck.position.second <= (TOP_WALL - PUCK_RADIUS) or           #проверка нахождения шайбы в воротах + коллизия с их левой стенкой
           puck.position.second >= (DOWN_WALL + PUCK_RADIUS)) and 
