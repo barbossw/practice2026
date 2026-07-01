@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from typing import overload
+from fastapi import WebSocket, WebSocketDisconnect
+from enum import Enum
 import constants
 import math
 
@@ -94,3 +96,31 @@ class GameState:
      player2 : Player
      puck : Puck
      score : Pair
+
+
+class Status(Enum):
+     NO_PLAYERS = 0
+     WAITING_FOR_OTHER_PLAYER = 1
+     READY = 2
+
+
+
+class WebSockerHandler:
+     connections : set[WebSocket]
+     #status : Status = 0
+
+     def __init__(self):
+          self.connections = set()
+
+
+     async def connect(self, websocket : WebSocket):
+          await websocket.accept()
+          self.connections.add(websocket)
+
+
+     async def disconnect(self, websocket : WebSocket):
+          self.connections.discard(websocket)
+
+     #careful with message data type !!
+     async def send_to_player(self, websocket : WebSocket, message : dict):
+          await websocket.send_json(message)
