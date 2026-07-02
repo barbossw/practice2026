@@ -1,23 +1,28 @@
-from objects import Pair, Player, Puck
+from objects import Pair, Player, Puck, GoalStatus
 from constants import*
+import math
 
 
+def calculate_player_puck_collision(player : Player, puck : Puck):
+    if math.hypot(player.position.first - puck.position.first,
+                  player.position.second - puck.position.second) <= PLAYER_RADIUS + PUCK_RADIUS:
+        player_speed = player.speed_vector * player.speed
+        puck_speed = puck.speed_vector * puck.speed
 
-def calculate_player_puck_collision(player : Player, puck : Puck) -> tuple[float, Pair]:
-    player_speed = player.speed_vector * player.speed
-    puck_speed = puck.speed_vector * puck.speed
+        #formula : v'' = v' - 2(v' * n)n , где n единичная нормаль к прямой
+        #по относительности v' = v(puck) - v(player)
 
-    #formula : v'' = v' - 2(v' * n)n , где n единичная нормаль к прямой
-    #по относительности v' = v(puck) - v(player)
+        puck_speed_relative = puck_speed - player_speed
+        normal_vector = puck.position - player.position
+        normal_vector_unit = normal_vector * (1/normal_vector.length())
 
-    puck_speed_relative = puck_speed - player_speed
-    normal_vector = puck.position - player.position
-    normal_vector_unit = normal_vector * (1/normal_vector.length())
+        puck_speed_relative_reflected = (puck_speed_relative - normal_vector_unit * ( 2*(puck_speed_relative * normal_vector_unit) ) )
+        puck_speed_reflected = puck_speed_relative_reflected + player_speed
 
-    puck_speed_relative_reflected = (puck_speed_relative - normal_vector_unit * ( 2*(puck_speed_relative * normal_vector_unit) ) )
-    puck_speed_reflected = puck_speed_relative_reflected + player_speed
-
-    return puck_speed_reflected.length(), (puck_speed_reflected * (1/puck_speed_reflected.length()))
+        return puck_speed_reflected
+    else:
+        return puck.speed_vector
+    
 
 
 
@@ -48,18 +53,20 @@ def calculate_puck_wall_collision(puck : Puck):
     return new_puck_speed_vector
 
 
-def checking_goal(puck : Puck):
+def checking_goal(puck : Puck) -> GoalStatus:
     if ((puck.position.second < (DOWN_WALL - PUCK_RADIUS) and  #в нижних воротах
         puck.position.first >= (LEFT_WALL + PUCK_RADIUS) and
         puck.position.first <= (RIGHT_WALL - PUCK_RADIUS))
         ):
-        pass #слать инфу о голе player2
+        return GoalStatus.Player2Scored #слать инфу о голе player2
 
     elif ((puck.position.second > (TOP_WALL + PUCK_RADIUS) and  #в верхних воротах
         puck.position.first >= (LEFT_WALL + PUCK_RADIUS) and
         puck.position.first <= (RIGHT_WALL - PUCK_RADIUS))
         ):
-        pass #слать инфу о голе player1
+        return GoalStatus.Player1Scored #слать инфу о голе player1
+    
+    return GoalStatus.NoGoal
 
 def calculate_player_wall_collision(player : Player, player_id : int):
     if (player.position.first >= RIGHT_WALL - PLAYER_RADIUS or          #коллизия с боковыми стенками обнуления х-вой координаты
@@ -76,3 +83,5 @@ def calculate_player_wall_collision(player : Player, player_id : int):
             player.position.second >= TOP_WALL - PLAYER_RADIUS):
 
             player.speed_vector.second = 0
+
+    return player.speed_vector

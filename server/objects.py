@@ -7,6 +7,7 @@ from collections import deque
 import math
 import asyncio
 from source import app
+from physics_engine import calculate_player_puck_collision, calculate_player_wall_collision, calculate_puck_wall_collision, checking_goal
 
 @dataclass
 class Pair:
@@ -241,10 +242,72 @@ class GameMaster():
                {"message" : "score reached"}
           )#отправляем месседж
 
+     def update_data_for_player1(self):
+          last_two_packets_for_player1 = self.masterLink.inputHandler.get_last_packets(1)
+
+          self.gamestate.player1.position = Pair(last_two_packets_for_player1[1].first, last_two_packets_for_player1[1].second)
+                  #обновляем позицию player1
+          self.gamestate.player1.speed_vector = Pair(last_two_packets_for_player1[1].first - last_two_packets_for_player1[0].first,
+                                                     last_two_packets_for_player1[1].second - last_two_packets_for_player1[0].second)       #считаем вектор скорости по последним двум пакетам данных
+          self.gamestate.player1.speed = self.gamestate.player1.speed_vector.length()
+          self.gamestate.player1.speed_vector = normalize_vector(self.gamestate.player1.speed_vector)
+
+
+          self.gamestate.player1.speed_vector = calculate_player_wall_collision(self.gamestate.player1)                      #чекаем коллизию player1 и стен
+          self.gamestate.player1.speed = self.gamestate.player1.speed_vector.length()
+          self.gamestate.player1.speed_vector = normalize_vector(self.gamestate.player1.speed_vector)
+
+     def update_data_for_player2(self):
+          last_two_packets_for_player2 = self.masterLink.inputHandler.get_last_packets(2)
+
+          self.gamestate.player2.position = Pair(last_two_packets_for_player2[1].first, last_two_packets_for_player2[1].second)
+                  #обновляем позицию player1
+          self.gamestate.player2.speed_vector = Pair(last_two_packets_for_player2[1].first - last_two_packets_for_player2[0].first,
+                                                     last_two_packets_for_player2[1].second - last_two_packets_for_player2[0].second)       #считаем вектор скорости по последним двум пакетам данных
+          self.gamestate.player2.speed = self.gamestate.player2.speed_vector.length()
+          self.gamestate.player2.speed_vector = normalize_vector(self.gamestate.player2.speed_vector)
+
+          self.gamestate.player2.speed_vector = calculate_player_wall_collision(self.gamestate.player2)                      #чекаем коллизию player2 и стен
+          self.gamestate.player2.speed = self.gamestate.player2.speed_vector.length()
+          self.gamestate.player2.speed_vector = normalize_vector(self.gamestate.player2.speed_vector)
+
+
+     
+     def update_puck_data(self):
+          self.gamestate.puck.position = self.gamestate.puck.position + self.gamestate.puck.speed_vector * self.gamestate.puck.speed   #обновляем позицию шайбы
+
+          self.gamestate.puck.speed_vector = calculate_puck_wall_collision(self.gamestate.puck)                                                                      #чекаем коллизию шайбы и стены и обновляем вектор скорости
+          self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length()
+          self.gamestate.puck.speed_vector = normalize_vector(self.gamestate.puck.speed_vector)
+
+          self.gamestate.puck.speed_vector = calculate_player_puck_collision(self.gamestate.player1, self.gamestate.puck)                                  #чекаем коллизию шайбы и player1 и обновляем вектор скорости
+          self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length()
+          self.gamestate.puck.speed_vector = normalize_vector(self.gamestate.puck.speed_vector)
+
+          self.gamestate.puck.speed_vector = calculate_player_puck_collision(self.gamestate.player2, self.gamestate.puck)                        #чекаем коллизию шайбы и player2 и обновляем вектор скорости
+          self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length()
+          self.gamestate.puck.speed_vector = normalize_vector(self.gamestate.puck.speed_vector)
+
+
      async def gameLoop(self):
 
-          while True: 
-               self.gamestate.puck.position = self.gamestate.puck.position + self.gamestate.puck.speed_vector * self.gamestate.puck.speed
+          while True:
+               self.update_data_for_player1()     #player1 обновляем
+               self.update_data_for_player2()     #player2 обновляем
+               self.update_puck_data()        #puck обновляем
+
+               goal_status : GoalStatus = checking_goal(self.gamestate.puck)
+
+               if goal_status == GoalStatus.Player1Scored:
+                    self.gamestate.score.first =  self.gamestate.score.first + 1
+                    self.masterLink.wsHandler.send_to_both_players() #send to both players msg about goal
+               elif goal_status == GoalStatus.Player2Scored:
+                    self.gamestate.score.second =  self.gamestate.score.second + 1
+                    self.masterLink.wsHandler.send_to_both_players() #send to both players msg about goal
+
+
+
+               
                
 
 class Master():
@@ -297,3 +360,7 @@ class InputHandler:
                return tuple(self._history[player_id])
 
 
+class GoalStatus(IntEnum):
+     NoGoal = 0
+     Player1Scored = 1
+     Player2Scored = 2
