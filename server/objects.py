@@ -2,9 +2,10 @@ from dataclasses import dataclass
 from typing import overload
 from fastapi import WebSocket, WebSocketDisconnect
 from enum import IntEnum
-import constants
+from constants import *
 import math
 import asyncio
+from source import app
 
 @dataclass
 class Pair:
@@ -66,7 +67,7 @@ class Puck:
     speed : float
     speed_vector : Pair
 
-    RADIUS : int = constants.PUCK_RADIUS
+    RADIUS : int = PUCK_RADIUS
 
     def __init__(self, position : Pair, speed : int, speed_vector : Pair):
         self.position = position
@@ -84,7 +85,7 @@ class Player:
      speed : float
      speed_vector : Pair
 
-     RADIUS = constants.PLAYER_RADIUS
+     RADIUS = PLAYER_RADIUS
 
      def __init__(self, position : Pair, speed : float, speed_vector : Pair):
           self.position = position
@@ -173,3 +174,44 @@ class WebSocketHandler:
           
      
      
+class GameMaster():
+     gamestate : GameState
+
+     def __init__(self):
+          self.gamestate.player1 = None
+          self.gamestate.player2 = None
+          self.gamestate.puck = None
+          self.gamestate.score = None
+
+     def StartGame(self, player1 : Player, player2 : Player):
+          self.gamestate.player1 = player1
+          self.gamestate.player1.position = Pair(0, DOWN_WALL + PLAYER_RADIUS)
+
+          self.gamestate.player2 = player2
+          self.gamestate.player2.position = Pair(0, TOP_WALL - PLAYER_RADIUS)
+
+          puck = Puck(Pair(0,0), 0, Pair(0,0))
+          self.gamestate.puck = puck
+
+          self.gamestate.score = Pair(0,0)
+
+     
+     def EndGameDisconnect(self):
+          self.gamestate.puck.speed = 0
+          app.state.web_handler.send_to_player1({})
+
+
+     def EndGameScore(self):
+          self.gamestate.puck.speed = 0
+
+
+class Master():
+     gameMaster : GameMaster
+     wsHandler : WebSocketHandler
+     #inputHandler
+
+
+     def __init__(self):
+          pass
+
+
