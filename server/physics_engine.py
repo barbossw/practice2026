@@ -68,6 +68,13 @@ def checking_goal(puck : Puck) -> GoalStatus:
     
     return GoalStatus.NoGoal
 
+
+
+
+
+#если есть коллизия игрока и стенки можно "достать" игрока из этой стенки немного подправив его координату
+
+
 def calculate_player_wall_collision(player : Player, player_id : int):
     if (player.position.first >= RIGHT_WALL - PLAYER_RADIUS or          #коллизия с боковыми стенками обнуления х-вой координаты
         player.position.first <= LEFT_WALL + PLAYER_RADIUS):

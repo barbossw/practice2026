@@ -202,6 +202,7 @@ class WebSocketHandler:
 class GameMaster():
      gamestate : GameState
      masterLink : "Master"
+     time_delta : float = 1/60
 
      def __init__(self, master : "Master"):
           GameState(
@@ -242,51 +243,81 @@ class GameMaster():
                {"message" : "score reached"}
           )#отправляем месседж
 
+
+
+
      def update_data_for_player1(self):
           last_two_packets_for_player1 = self.masterLink.inputHandler.get_last_packets(1)
+
+          #если еще нет двух пакетов ничего не происходит
+          if last_two_packets_for_player1 is None:
+               return 
 
           self.gamestate.player1.position = Pair(last_two_packets_for_player1[1].first, last_two_packets_for_player1[1].second)
                   #обновляем позицию player1
           self.gamestate.player1.speed_vector = Pair(last_two_packets_for_player1[1].first - last_two_packets_for_player1[0].first,
-                                                     last_two_packets_for_player1[1].second - last_two_packets_for_player1[0].second)       #считаем вектор скорости по последним двум пакетам данных
-          self.gamestate.player1.speed = self.gamestate.player1.speed_vector.length()
+                                        last_two_packets_for_player1[1].second - last_two_packets_for_player1[0].second)       #считаем вектор скорости по последним двум пакетам данных (за 1/60 секунды!!)
+          self.gamestate.player1.speed = self.gamestate.player1.speed_vector.length() 
           self.gamestate.player1.speed_vector = normalize_vector(self.gamestate.player1.speed_vector)
 
 
-          self.gamestate.player1.speed_vector = calculate_player_wall_collision(self.gamestate.player1)                      #чекаем коллизию player1 и стен
+          self.gamestate.player1.speed_vector = calculate_player_wall_collision(self.gamestate.player1, 1)                      #чекаем коллизию player1 и стен
           self.gamestate.player1.speed = self.gamestate.player1.speed_vector.length()
           self.gamestate.player1.speed_vector = normalize_vector(self.gamestate.player1.speed_vector)
+
+          if self.gamestate.player1.speed > SPEED_LIMIT:
+               self.gamestate.player1.speed = SPEED_LIMIT
+
+
 
      def update_data_for_player2(self):
           last_two_packets_for_player2 = self.masterLink.inputHandler.get_last_packets(2)
+
+          #если нет двух пакетов
+          if last_two_packets_for_player2 is None:
+               return
 
           self.gamestate.player2.position = Pair(last_two_packets_for_player2[1].first, last_two_packets_for_player2[1].second)
                   #обновляем позицию player1
           self.gamestate.player2.speed_vector = Pair(last_two_packets_for_player2[1].first - last_two_packets_for_player2[0].first,
                                                      last_two_packets_for_player2[1].second - last_two_packets_for_player2[0].second)       #считаем вектор скорости по последним двум пакетам данных
-          self.gamestate.player2.speed = self.gamestate.player2.speed_vector.length()
+          self.gamestate.player2.speed = self.gamestate.player2.speed_vector.length() 
           self.gamestate.player2.speed_vector = normalize_vector(self.gamestate.player2.speed_vector)
 
-          self.gamestate.player2.speed_vector = calculate_player_wall_collision(self.gamestate.player2)                      #чекаем коллизию player2 и стен
-          self.gamestate.player2.speed = self.gamestate.player2.speed_vector.length()
+          self.gamestate.player2.speed_vector = calculate_player_wall_collision(self.gamestate.player2, 2)                      #чекаем коллизию player2 и стен
+          self.gamestate.player2.speed = self.gamestate.player2.speed_vector.length() 
           self.gamestate.player2.speed_vector = normalize_vector(self.gamestate.player2.speed_vector)
 
+          if self.gamestate.player2.speed > SPEED_LIMIT:
+               self.gamestate.player2.speed = SPEED_LIMIT
 
-     
+
+
      def update_puck_data(self):
-          self.gamestate.puck.position = self.gamestate.puck.position + self.gamestate.puck.speed_vector * self.gamestate.puck.speed   #обновляем позицию шайбы
+          
+          if (self.gamestate.puck.speed - PUCK_FRICTION) > 0:
+               self.gamestate.puck.speed = self.gamestate.puck.speed - PUCK_FRICTION
+          else:
+               self.gamestate.puck.speed = 0
+
+
+          self.gamestate.puck.position = self.gamestate.puck.position + self.gamestate.puck.speed_vector * self.gamestate.puck.speed  #обновляем позицию шайбы
+          
 
           self.gamestate.puck.speed_vector = calculate_puck_wall_collision(self.gamestate.puck)                                                                      #чекаем коллизию шайбы и стены и обновляем вектор скорости
-          self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length()
+          self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length() 
           self.gamestate.puck.speed_vector = normalize_vector(self.gamestate.puck.speed_vector)
 
           self.gamestate.puck.speed_vector = calculate_player_puck_collision(self.gamestate.player1, self.gamestate.puck)                                  #чекаем коллизию шайбы и player1 и обновляем вектор скорости
-          self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length()
+          self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length() 
           self.gamestate.puck.speed_vector = normalize_vector(self.gamestate.puck.speed_vector)
 
           self.gamestate.puck.speed_vector = calculate_player_puck_collision(self.gamestate.player2, self.gamestate.puck)                        #чекаем коллизию шайбы и player2 и обновляем вектор скорости
-          self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length()
+          self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length() 
           self.gamestate.puck.speed_vector = normalize_vector(self.gamestate.puck.speed_vector)
+
+          if self.gamestate.puck.speed > SPEED_LIMIT:
+               self.gamestate.puck.speed = SPEED_LIMIT
 
 
      async def gameLoop(self):
@@ -300,10 +331,15 @@ class GameMaster():
 
                if goal_status == GoalStatus.Player1Scored:
                     self.gamestate.score.first =  self.gamestate.score.first + 1
-                    self.masterLink.wsHandler.send_to_both_players() #send to both players msg about goal
+                    #self.masterLink.wsHandler.send_to_both_players() #send to both players msg about goal
                elif goal_status == GoalStatus.Player2Scored:
                     self.gamestate.score.second =  self.gamestate.score.second + 1
-                    self.masterLink.wsHandler.send_to_both_players() #send to both players msg about goal
+                    #self.masterLink.wsHandler.send_to_both_players() #send to both players msg about goal
+
+                    #в идеале, можно разделить сообщения на типы, чтобы клиенту было легче их обрабатывать
+                    #например - message, error, GameState, GoalStatus
+
+               await asyncio.sleep(self.time_delta)
 
 
 
@@ -331,7 +367,7 @@ class InputHandler:
                1 : deque(maxlen = 2),
                2 : deque(maxlen = 2)
           }
-          self._lock = asyncio.Lock()
+          
 
 
 
@@ -343,21 +379,19 @@ class InputHandler:
 # }
 #}
 
-     async def store_packet(self, player_id : int, packet_data : dict):
-          async with self._lock:
-               self._history[player_id].append(
-                    Pair(first = packet_data["position"]["x"],
-                         second = packet_data["position"]["y"])
+     def store_packet(self, player_id : int, packet_data : dict):
+          self._history[player_id].append(
+               Pair(first = packet_data["position"]["x"],
+                    second = packet_data["position"]["y"])
                )
 
 
 
-     async def get_last_packets(self, player_id : int):
-          async with self._lock:
-               if len(self._history[player_id]) < 2:
-                    return None
+     def get_last_packets(self, player_id : int):
+          if len(self._history[player_id]) < 2:
+               return None
                
-               return tuple(self._history[player_id])
+          return tuple(self._history[player_id])
 
 
 class GoalStatus(IntEnum):
