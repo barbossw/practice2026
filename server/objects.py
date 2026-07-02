@@ -202,6 +202,7 @@ class WebSocketHandler:
 class GameMaster():
      gamestate : GameState
      masterLink : "Master"
+     game_running : bool
      time_delta : float = 1/60
 
      def __init__(self, master : "Master"):
@@ -212,6 +213,7 @@ class GameMaster():
                score = Pair(0,0)
           )
           self.masterLink = master
+          game_running = False
 
      def StartGame(self, player1 : Player, player2 : Player):
           self.gamestate.player1 = player1
@@ -224,12 +226,14 @@ class GameMaster():
           self.gamestate.puck = puck
 
           self.gamestate.score = Pair(0,0)
-
-
+          
+          self.game_running = True
           asyncio.create_task(self.gameLoop())
 
      
      async def EndGameDisconnect(self):
+          self.game_running = False          #the game stops at the next iteration
+
           self.gamestate.puck.speed = 0
           await self.masterLink.wsHandler.send_to_both_players(
                {"message" : "one of the players disconnected. the game stops now"}
@@ -238,6 +242,8 @@ class GameMaster():
 
 
      async def EndGameScore(self):
+          self.game_running = False
+
           self.gamestate.puck.speed = 0
           await self.masterLink.wsHandler.send_to_both_players(
                {"message" : "score reached"}
@@ -322,7 +328,7 @@ class GameMaster():
 
      async def gameLoop(self):
 
-          while True:
+          while self.game_running:
                self.update_data_for_player1()     #player1 обновляем
                self.update_data_for_player2()     #player2 обновляем
                self.update_puck_data()        #puck обновляем
