@@ -179,10 +179,12 @@ class GameMaster():
      gamestate : GameState
 
      def __init__(self):
-          self.gamestate.player1 = None
-          self.gamestate.player2 = None
-          self.gamestate.puck = None
-          self.gamestate.score = None
+          GameState(
+               player1 = Player(Pair(0,0), 0, Pair(0,0)),
+               player2 = Player(Pair(0,0), 0, Pair(0,0)),
+               puck = Puck(Pair(0,0), 0, Pair(0,0)),
+               score = Pair(0,0)
+          )
 
      def StartGame(self, player1 : Player, player2 : Player):
           self.gamestate.player1 = player1
@@ -214,6 +216,10 @@ class Master():
 
      def __init__(self):
           pass
+
+
+
+
 
 class InputHandler:
 
