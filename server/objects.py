@@ -3,6 +3,7 @@ from typing import overload
 from fastapi import WebSocket, WebSocketDisconnect
 from enum import IntEnum
 from constants import *
+from collections import deque
 import math
 import asyncio
 from source import app
@@ -213,5 +214,40 @@ class Master():
 
      def __init__(self):
           pass
+
+class InputHandler:
+
+     def __init__(self):
+          self._history = {
+               1 : deque(maxlen = 2),
+               2 : deque(maxlen = 2)
+          }
+          self._lock = asyncio.Lock()
+
+
+
+#packet_data MUST look like 
+#{
+# "position": {
+#     "x": 153.2,
+#     "y": 421.6
+# }
+#}
+
+     async def store_packet(self, player_id : int, packet_data : dict):
+          async with self._lock:
+               self._history[player_id].append(
+                    Pair(first = packet_data["position"]["x"],
+                         second = packet_data["position"]["y"])
+               )
+
+
+
+     async def get_last_packets(self, player_id : int):
+          async with self._lock:
+               if len(self._history[player_id]) < 2:
+                    return None
+               
+               return tuple(self._history[player_id])
 
 
