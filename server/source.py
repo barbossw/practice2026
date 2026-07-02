@@ -6,9 +6,9 @@ from objects import WebSocketHandler, InputHandler, Master
 
 @asynccontextmanager
 async def lifespan_func(app : FastAPI):
-    app.state.web_handler = WebSocketHandler()
-    app.state.input_handler = InputHandler()
     app.state.master = Master()
+
+    
     yield
 
 
