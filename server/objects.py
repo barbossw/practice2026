@@ -177,14 +177,16 @@ class WebSocketHandler:
      
 class GameMaster():
      gamestate : GameState
+     masterLink : Master
 
-     def __init__(self):
+     def __init__(self, master : Master):
           GameState(
                player1 = Player(Pair(0,0), 0, Pair(0,0)),
                player2 = Player(Pair(0,0), 0, Pair(0,0)),
                puck = Puck(Pair(0,0), 0, Pair(0,0)),
                score = Pair(0,0)
           )
+          self.masterLink = master
 
      def StartGame(self, player1 : Player, player2 : Player):
           self.gamestate.player1 = player1
@@ -201,7 +203,7 @@ class GameMaster():
      
      def EndGameDisconnect(self):
           self.gamestate.puck.speed = 0
-          app.state.web_handler.send_to_player1({})
+          self.masterLink.wsHandler.send_to_player1()#отправляем сам месседж
 
 
      def EndGameScore(self):
@@ -211,12 +213,13 @@ class GameMaster():
 class Master():
      gameMaster : GameMaster
      wsHandler : WebSocketHandler
-     #inputHandler
+     inputHandler : InputHandler
 
 
      def __init__(self):
-          pass
-
+          self.gameMaster = GameMaster(self)
+          self.wsHandler = WebSocketHandler()
+          self.inputHandler = InputHandler()
 
 
 
