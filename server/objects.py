@@ -114,12 +114,14 @@ class WebSocketHandler:
      player1 : WebSocket | None
      player2 : WebSocket | None
      status : Status
+     masterLink : Master
 
-     def __init__(self):
+     def __init__(self, master : Master):
           self.player1 = None
           self.player2 = None
           self.status = Status.NO_PLAYERS
           self.lock = asyncio.Lock()
+          self.masterLink = master
 
 
      def number_of_connected_players(self) -> int:
@@ -143,6 +145,9 @@ class WebSocketHandler:
                     await websocket.close()
                     return False
                self.status = Status(self.number_of_connected_players())
+               if self.status == Status.READY:
+                    self.masterLink.gameMaster.StartGame(player1 = Player(Pair(0,0), 0, Pair(0,0)), 
+                                                         player2 = Player(Pair(0,0), 0, Pair(0,0)))
                return True
 
 
@@ -172,6 +177,11 @@ class WebSocketHandler:
                await self.player2.send_json(message)
           else:
                raise RuntimeError("Player 2 is not connected. Trying to send a message with no connection")     
+     
+     async def send_to_both_players(self, message : dict):
+          await self.player1.send_json(message)
+          await self.player2.send_json(message)
+
           
      
      
@@ -203,11 +213,12 @@ class GameMaster():
      
      def EndGameDisconnect(self):
           self.gamestate.puck.speed = 0
-          self.masterLink.wsHandler.send_to_player1()#отправляем сам месседж
+          self.masterLink.wsHandler.send_to_both_players()#отправляем сам месседж
 
 
      def EndGameScore(self):
           self.gamestate.puck.speed = 0
+          self.masterLink.wsHandler.send_to_both_players()#отправляем месседж
 
 
 class Master():
