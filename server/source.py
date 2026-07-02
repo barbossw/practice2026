@@ -8,7 +8,7 @@ from objects import WebSocketHandler, InputHandler, Master
 async def lifespan_func(app : FastAPI):
     app.state.master = Master()
 
-    
+
     yield
 
 
@@ -60,4 +60,4 @@ async def websocket_connect(websocket : WebSocket):
 
 
     except WebSocketDisconnect:
-        web_handler.disconnect(websocket)
+        await web_handler.disconnect(websocket)

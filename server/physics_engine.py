@@ -61,3 +61,18 @@ def checking_goal(puck : Puck):
         ):
         pass #слать инфу о голе player1
 
+def calculate_player_wall_collision(player : Player, player_id : int):
+    if (player.position.first >= RIGHT_WALL - PLAYER_RADIUS or          #коллизия с боковыми стенками обнуления х-вой координаты
+        player.position.first <= LEFT_WALL + PLAYER_RADIUS):
+
+        player.speed_vector.first = 0
+    if player_id == 1:          
+        if (player.position.second >= -1 * PLAYER_RADIUS or 
+            player.position.second <= DOWN_WALL + PLAYER_RADIUS):           #выход за пределы нижней половины по y у player1, обнуление y координаты
+
+            player.speed_vector.second = 0
+    else:
+        if (player.position.second <= PLAYER_RADIUS or                      #выход за пределы верхней половины по y y player2, обнуление y координаты
+            player.position.second >= TOP_WALL - PLAYER_RADIUS):
+
+            player.speed_vector.second = 0

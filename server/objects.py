@@ -183,7 +183,7 @@ class WebSocketHandler:
           await self.player2.send_json(message)
 
           
-     
+
      
 class GameMaster():
      gamestate : GameState
@@ -210,6 +210,9 @@ class GameMaster():
 
           self.gamestate.score = Pair(0,0)
 
+
+          asyncio.create_task(self.gameLoop())
+
      
      def EndGameDisconnect(self):
           self.gamestate.puck.speed = 0
@@ -220,6 +223,11 @@ class GameMaster():
           self.gamestate.puck.speed = 0
           self.masterLink.wsHandler.send_to_both_players()#отправляем месседж
 
+     async def gameLoop(self):
+
+          while True: 
+               self.gamestate.puck.position = self.gamestate.puck.position + self.gamestate.puck.speed_vector * self.gamestate.puck.speed
+               
 
 class Master():
      gameMaster : GameMaster
@@ -229,7 +237,7 @@ class Master():
 
      def __init__(self):
           self.gameMaster = GameMaster(self)
-          self.wsHandler = WebSocketHandler()
+          self.wsHandler = WebSocketHandler(self)
           self.inputHandler = InputHandler()
 
 
