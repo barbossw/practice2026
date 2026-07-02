@@ -114,9 +114,9 @@ class WebSocketHandler:
      player1 : WebSocket | None
      player2 : WebSocket | None
      status : Status
-     masterLink : Master
+     masterLink : "Master"
 
-     def __init__(self, master : Master):
+     def __init__(self, master : "Master"):
           self.player1 = None
           self.player2 = None
           self.status = Status.NO_PLAYERS
@@ -179,17 +179,30 @@ class WebSocketHandler:
                raise RuntimeError("Player 2 is not connected. Trying to send a message with no connection")     
      
      async def send_to_both_players(self, message : dict):
-          await self.player1.send_json(message)
-          await self.player2.send_json(message)
+          successfully_sent = True
+          if isinstance(self.player1, WebSocket):
+               await self.player1.send_json(message)
+          else:
+               successfully_sent = False
+          
+          if isinstance(self.player2, WebSocket):
+               await self.player2.send_json(message)
+          else:
+               successfully_sent = False
+          
+          return successfully_sent
+
+          
+          
 
           
 
      
 class GameMaster():
      gamestate : GameState
-     masterLink : Master
+     masterLink : "Master"
 
-     def __init__(self, master : Master):
+     def __init__(self, master : "Master"):
           GameState(
                player1 = Player(Pair(0,0), 0, Pair(0,0)),
                player2 = Player(Pair(0,0), 0, Pair(0,0)),
@@ -214,14 +227,19 @@ class GameMaster():
           asyncio.create_task(self.gameLoop())
 
      
-     def EndGameDisconnect(self):
+     async def EndGameDisconnect(self):
           self.gamestate.puck.speed = 0
-          self.masterLink.wsHandler.send_to_both_players()#отправляем сам месседж
+          await self.masterLink.wsHandler.send_to_both_players(
+               {"message" : "one of the players disconnected. the game stops now"}
+          )
+          #отправляем сам месседж
 
 
-     def EndGameScore(self):
+     async def EndGameScore(self):
           self.gamestate.puck.speed = 0
-          self.masterLink.wsHandler.send_to_both_players()#отправляем месседж
+          await self.masterLink.wsHandler.send_to_both_players(
+               {"message" : "score reached"}
+          )#отправляем месседж
 
      async def gameLoop(self):
 
@@ -232,7 +250,7 @@ class GameMaster():
 class Master():
      gameMaster : GameMaster
      wsHandler : WebSocketHandler
-     inputHandler : InputHandler
+     inputHandler : "InputHandler"
 
 
      def __init__(self):
