@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import overload
 from fastapi import WebSocket, WebSocketDisconnect
 from enum import IntEnum
@@ -71,7 +71,7 @@ class Puck:
 
     RADIUS : int = PUCK_RADIUS
 
-    def __init__(self, position : Pair, speed : int, speed_vector : Pair):
+    def __init__(self, position : Pair, speed : float, speed_vector : Pair):
         self.position = position
         self.speed = speed
         self.speed_vector = normalize_vector(speed_vector)
@@ -160,6 +160,8 @@ class WebSocketHandler:
                elif websocket is self.player2:
                     self.player2 = None
                self.status = Status(self.number_of_connected_players())
+               if self.status is not Status.READY:
+                    await self.masterLink.gameMaster.EndGameDisconnect()
                return
 
 
@@ -204,6 +206,7 @@ class GameMaster():
      masterLink : "Master"
      game_running : bool
      time_delta : float = 1/60
+     max_score : float = 5
 
      def __init__(self, master : "Master"):
           GameState(
@@ -246,7 +249,7 @@ class GameMaster():
 
           self.gamestate.puck.speed = 0
           await self.masterLink.wsHandler.send_to_both_players(
-               {"message" : "score reached"}
+               {"message" : "max_score reached. the game stops now"}
           )#отправляем месседж
 
 
@@ -258,13 +261,22 @@ class GameMaster():
           #если еще нет двух пакетов ничего не происходит
           if last_two_packets_for_player1 is None:
                return 
-
-          self.gamestate.player1.position = Pair(last_two_packets_for_player1[1].first, last_two_packets_for_player1[1].second)
-                  #обновляем позицию player1
+          
           self.gamestate.player1.speed_vector = Pair(last_two_packets_for_player1[1].first - last_two_packets_for_player1[0].first,
                                         last_two_packets_for_player1[1].second - last_two_packets_for_player1[0].second)       #считаем вектор скорости по последним двум пакетам данных (за 1/60 секунды!!)
           self.gamestate.player1.speed = self.gamestate.player1.speed_vector.length() 
           self.gamestate.player1.speed_vector = normalize_vector(self.gamestate.player1.speed_vector)
+
+          #проверка на превышение скорости перед рассчетом позиции
+          if self.gamestate.player1.speed <= SPEED_LIMIT:
+               self.gamestate.player1.position = Pair(last_two_packets_for_player1[1].first, last_two_packets_for_player1[1].second)
+                  #обновляем позицию player1
+          else:
+               self.gamestate.player1.position = self.gamestate.player1.position + (self.gamestate.player1.speed_vector * SPEED_LIMIT)
+               self.gamestate.player1.speed = SPEED_LIMIT
+
+
+          
 
 
           self.gamestate.player1.speed_vector = calculate_player_wall_collision(self.gamestate.player1, 1)                      #чекаем коллизию player1 и стен
@@ -282,13 +294,19 @@ class GameMaster():
           #если нет двух пакетов
           if last_two_packets_for_player2 is None:
                return
-
-          self.gamestate.player2.position = Pair(last_two_packets_for_player2[1].first, last_two_packets_for_player2[1].second)
-                  #обновляем позицию player1
+          
           self.gamestate.player2.speed_vector = Pair(last_two_packets_for_player2[1].first - last_two_packets_for_player2[0].first,
                                                      last_two_packets_for_player2[1].second - last_two_packets_for_player2[0].second)       #считаем вектор скорости по последним двум пакетам данных
           self.gamestate.player2.speed = self.gamestate.player2.speed_vector.length() 
           self.gamestate.player2.speed_vector = normalize_vector(self.gamestate.player2.speed_vector)
+
+          #проверка на превышение скорости перед рассчетом позиции
+          if self.gamestate.player2.speed <= SPEED_LIMIT:
+               self.gamestate.player2.position = Pair(last_two_packets_for_player2[1].first, last_two_packets_for_player2[1].second)
+                    #обновляем позицию player2
+          else:
+               self.gamestate.player2.position = self.gamestate.player2.position + (self.gamestate.player2.speed_vector * SPEED_LIMIT)
+          
 
           self.gamestate.player2.speed_vector = calculate_player_wall_collision(self.gamestate.player2, 2)                      #чекаем коллизию player2 и стен
           self.gamestate.player2.speed = self.gamestate.player2.speed_vector.length() 
@@ -344,6 +362,42 @@ class GameMaster():
 
                     #в идеале, можно разделить сообщения на типы, чтобы клиенту было легче их обрабатывать
                     #например - message, error, GameState, GoalStatus
+
+               #send packets here
+               await self.masterLink.wsHandler.send_to_player1(
+                    {"GameState" : asdict(self.gamestate)}
+                    ) #player 1
+
+               #reversing the data for player2
+               gamestate_copy_reversed = GameState(
+                    player1= Player(
+                         position= self.gamestate.player2.position * -1,
+                         speed= self.gamestate.player2.speed,
+                         speed_vector= self.gamestate.player2.speed_vector * -1
+                    ),
+                    player2= Player(
+                         position= self.gamestate.player1.position * -1,
+                         speed = self.gamestate.player1.speed,
+                         speed_vector= self.gamestate.player1.speed_vector * -1
+                    ),
+                    puck = Puck(
+                         position= self.gamestate.puck.position * -1,
+                         speed= self.gamestate.puck.speed,
+                         speed_vector= self.gamestate.puck.speed_vector * -1
+                    ),
+                    score = Pair(
+                         first= self.gamestate.score.second,
+                         second= self.gamestate.score.first
+                    )
+               )
+               await self.masterLink.wsHandler.send_to_player2(
+                    {"GameState" : asdict(gamestate_copy_reversed)}
+                    )
+          
+
+               if self.gamestate.score.first >= 5 or self.gamestate.score.second >= 5:
+                    await self.EndGameScore()
+               
 
                await asyncio.sleep(self.time_delta)
 
