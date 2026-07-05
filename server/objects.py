@@ -1,7 +1,7 @@
 from dataclasses import dataclass, asdict
 from typing import overload
 from fastapi import WebSocket, WebSocketDisconnect
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 from constants import *
 from collections import deque
 import math
@@ -110,6 +110,18 @@ class Status(IntEnum):
      READY = 2
 
 
+class PacketType(StrEnum):
+     GAME_STATE = "GameState"
+     MESSAGE = "Message"
+     ERROR = "Error"
+
+
+
+@dataclass
+class Packet:
+     type : PacketType
+     data : dict | str
+
 
 class WebSocketHandler:
      player1 : WebSocket | None
@@ -168,28 +180,28 @@ class WebSocketHandler:
 
      #message data type - dict
      #need to serialize GameState to dict with asdict(game_state)
-     async def send_to_player1(self, message : dict):
+     async def send_to_player1(self, packet : Packet):
           if isinstance(self.player1, WebSocket):
-               await self.player1.send_json(message)
+               await self.player1.send_json(asdict(packet))
           else:
                raise RuntimeError("Player 1 is not connected. Trying to send a message with no connection")          
 
-     async def send_to_player2(self, message : dict):
+     async def send_to_player2(self, packet : Packet):
           if isinstance(self.player2, WebSocket):
                #reverse data across the (0,0) coordinate here
-               await self.player2.send_json(message)
+               await self.player2.send_json(asdict(packet))
           else:
                raise RuntimeError("Player 2 is not connected. Trying to send a message with no connection")     
      
-     async def send_to_both_players(self, message : dict):
+     async def send_to_both_players(self, packet : Packet):
           successfully_sent = True
           if isinstance(self.player1, WebSocket):
-               await self.player1.send_json(message)
+               await self.player1.send_json(asdict(packet))
           else:
                successfully_sent = False
           
           if isinstance(self.player2, WebSocket):
-               await self.player2.send_json(message)
+               await self.player2.send_json(asdict(packet))
           else:
                successfully_sent = False
           
@@ -239,7 +251,10 @@ class GameMaster():
 
           self.gamestate.puck.speed = 0
           await self.masterLink.wsHandler.send_to_both_players(
-               {"message" : "one of the players disconnected. the game stops now"}
+               Packet(
+                    type= PacketType.MESSAGE,
+                    data = "one of the players disconnected. the game stops now"
+                    )
           )
           #отправляем сам месседж
 
@@ -249,7 +264,10 @@ class GameMaster():
 
           self.gamestate.puck.speed = 0
           await self.masterLink.wsHandler.send_to_both_players(
-               {"message" : "max_score reached. the game stops now"}
+               Packet(
+                    type= PacketType.MESSAGE,
+                    data= "max_score reached. the game stops now"
+               )
           )#отправляем месседж
 
 
@@ -365,7 +383,10 @@ class GameMaster():
 
                #send packets here
                await self.masterLink.wsHandler.send_to_player1(
-                    {"GameState" : asdict(self.gamestate)}
+                    Packet(
+                         type= PacketType.GAME_STATE,
+                         data= asdict(self.gamestate)
+                    )
                     ) #player 1
 
                #reversing the data for player2
@@ -390,8 +411,12 @@ class GameMaster():
                          second= self.gamestate.score.first
                     )
                )
+               
                await self.masterLink.wsHandler.send_to_player2(
-                    {"GameState" : asdict(gamestate_copy_reversed)}
+                    Packet(
+                         type= PacketType.GAME_STATE,
+                         data= asdict(gamestate_copy_reversed)
+                    )
                     )
           
 
@@ -458,3 +483,5 @@ class GoalStatus(IntEnum):
      NoGoal = 0
      Player1Scored = 1
      Player2Scored = 2
+
+

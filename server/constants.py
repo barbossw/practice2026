@@ -31,49 +31,31 @@ receive inside /ws_connect endpoint:
 
 sends to players:
 
-send_json(asdict(GameState))
-
-which will look like:
-
 {
-    "player1": {
-        "position": {
-            "first": 100,
-            "second": 250
+    "type": "GameState",
+    "data": {
+        "player1": {
+            "position": {
+                "first": 100,
+                "second": 250
+            },
+            "speed": 5,
+            "speed_vector": {
+                "first": 1.0,
+                "second": 0.0
+            }
         },
-        "speed": 5,
-        "speed_vector": {
-            "first": 1.0,
-            "second": 0.0
-        }
-    },
-    "player2": {
-        "position": {
-            "first": 700,
-            "second": 250
+        "player2": {
+            ...
         },
-        "speed": 5,
-        "speed_vector": {
-            "first": -1.0,
-            "second": 0.0
-        }
-    },
-    "puck": {
-        "position": {
-            "first": 400,
-            "second": 250
+        "puck": {
+            ...
         },
-        "speed": 8,
-        "speed_vector": {
-            "first": 0.7071067811865475,
-            "second": 0.7071067811865475
+        "score": {
+            "first": 2,
+            "second": 3
         }
-    },
-    "score": {
-        "first": 2,
-        "second": 3
     }
 }
-
 
 """
