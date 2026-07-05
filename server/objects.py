@@ -6,7 +6,6 @@ from constants import *
 from collections import deque
 import math
 import asyncio
-from source import app
 from physics_engine import calculate_player_puck_collision, calculate_player_wall_collision, calculate_puck_wall_collision, checking_goal
 
 @dataclass
@@ -411,7 +410,7 @@ class GameMaster():
                          second= self.gamestate.score.first
                     )
                )
-               
+
                await self.masterLink.wsHandler.send_to_player2(
                     Packet(
                          type= PacketType.GAME_STATE,
