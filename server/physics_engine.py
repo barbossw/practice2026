@@ -1,4 +1,4 @@
-from objects import Pair, Player, Puck, GoalStatus
+from models import Pair, Player, Puck, GoalStatus
 from constants import*
 import math
 

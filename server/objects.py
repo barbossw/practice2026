@@ -1,97 +1,18 @@
 from dataclasses import dataclass, asdict
-from typing import overload
 from fastapi import WebSocket, WebSocketDisconnect
 from enum import IntEnum, StrEnum
 from constants import *
 from collections import deque
-import math
 import asyncio
+
 from physics_engine import calculate_player_puck_collision, calculate_player_wall_collision, calculate_puck_wall_collision, checking_goal
+from models import Pair, Player, Puck, GoalStatus
+from models import normalize_vector
 
-@dataclass
-class Pair:
-    first : float
-    second : float
-
-    @overload
-    def __mul__(self, other: "Pair") -> float: ...
-
-    @overload
-    def __mul__(self, other: float) -> "Pair": ...
-
-    @overload
-    def __mul__(self, other: int) -> "Pair": ...
-
-    def __mul__(self, other):
-        if isinstance(other, Pair):
-              return self.first * other.first + self.second * other.second
-        elif isinstance(other, (int, float)):
-             return Pair(
-                  self.first * other,
-                  self.second * other
-             )
-        return NotImplemented
-    
-    def __rmul__(self, other):
-         return self.__mul__(other)
-    
-    
-    def __add__(self, other : "Pair") -> "Pair":
-         return Pair(
-            self.first + other.first,
-            self.second + other.second,
-        )
-    
-    def __sub__(self, other : "Pair") -> "Pair":
-         return Pair(
-            self.first - other.first,
-            self.second - other.second,
-        )
-         
-    def length(self) -> float:
-         return math.hypot(self.first, self.second)
-
-
-
-def normalize_vector(vector : Pair) -> Pair:
-        length = math.sqrt(vector.first ** 2 + vector.second ** 2)
-        if length == 0:
-             return Pair(0, 0)
-        new_vector = Pair(vector.first / length, vector.second / length)
-        return new_vector
-
-
-
-@dataclass
-class Puck:
-    position : Pair
-    speed : float
-    speed_vector : Pair
-
-    RADIUS : int = PUCK_RADIUS
-
-    def __init__(self, position : Pair, speed : float, speed_vector : Pair):
-        self.position = position
-        self.speed = speed
-        self.speed_vector = normalize_vector(speed_vector)
 
     
 
 
-
-
-@dataclass
-class Player:
-     position : Pair
-     speed : float
-     speed_vector : Pair
-
-     RADIUS = PLAYER_RADIUS
-
-     def __init__(self, position : Pair, speed : float, speed_vector : Pair):
-          self.position = position
-          self.speed = speed
-          self.speed_vector = normalize_vector(speed_vector)
 
 
 
@@ -156,11 +77,12 @@ class WebSocketHandler:
                else:
                     await websocket.close()
                     return False
-               self.status = Status(self.number_of_connected_players())
-               if self.status == Status.READY:
-                    self.masterLink.gameMaster.StartGame(player1 = Player(Pair(0,0), 0, Pair(0,0)), 
-                                                         player2 = Player(Pair(0,0), 0, Pair(0,0)))
-               return True
+               
+          self.status = Status(self.number_of_connected_players())
+          if (self.status == Status.READY) and (self.masterLink.gameMaster.game_running is False):
+               self.masterLink.gameMaster.StartGame(player1 = Player(Pair(0,0), 0, Pair(0,0)), 
+                                                  player2 = Player(Pair(0,0), 0, Pair(0,0)))
+          return True
 
 
      async def disconnect(self, websocket : WebSocket):
@@ -170,10 +92,11 @@ class WebSocketHandler:
                     self.player1 = None
                elif websocket is self.player2:
                     self.player2 = None
-               self.status = Status(self.number_of_connected_players())
-               if self.status is not Status.READY:
-                    await self.masterLink.gameMaster.EndGameDisconnect()
-               return
+
+          self.status = Status(self.number_of_connected_players())
+          if (self.status is not Status.READY) and (self.masterLink.gameMaster.game_running is True):
+               await self.masterLink.gameMaster.EndGameDisconnect()
+          return
 
 
 
@@ -478,9 +401,6 @@ class InputHandler:
           return tuple(self._history[player_id])
 
 
-class GoalStatus(IntEnum):
-     NoGoal = 0
-     Player1Scored = 1
-     Player2Scored = 2
+
 
 

@@ -43,7 +43,7 @@ async def websocket_connect(websocket : WebSocket):
 
     accepted = await web_handler.connect(websocket)
     if not accepted:
-        return {"message" : "Failed to establish connection - the game is full"}
+        return 
 
     try:
         while True:
