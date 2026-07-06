@@ -66,3 +66,20 @@ async def websocket_connect(websocket : WebSocket):
 
 
 #test endpoints
+@app.get("/check_connections")
+async def check_connections():
+    master : Master = app.state.master
+    web_handler : WebSocketHandler = master.wsHandler
+    player1_connected = False
+    player2_connected = False
+    if web_handler.player1 is not None:
+        player1_connected = True
+    if web_handler.player2 is not True:
+        player2_connected = True
+
+    return {
+        "number_of_connected_players" : web_handler.number_of_connected_players(),
+        "player1_connected" : player1_connected,
+        "player2_connected" : player2_connected
+    }
+        
