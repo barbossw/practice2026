@@ -288,6 +288,18 @@ class GameMaster():
                self.gamestate.puck.speed = SPEED_LIMIT
 
 
+     def reset_after_goal(self):
+          #reset players and puck
+          self.gamestate.player1 = Player(Pair(0, DOWN_WALL + PLAYER_RADIUS), 0, Pair(0,0))
+          self.gamestate.player2 = Player(Pair(0, TOP_WALL - PLAYER_RADIUS), 0, Pair(0,0))
+          self.gamestate.puck = Puck(Pair(0,0), 0, Pair(0,0))
+
+          self.masterLink.inputHandler.clear_inputs()
+
+
+
+
+
      async def gameLoop(self):
 
           while self.game_running:
@@ -299,10 +311,11 @@ class GameMaster():
 
                if goal_status == GoalStatus.Player1Scored:
                     self.gamestate.score.first =  self.gamestate.score.first + 1
-                    #self.masterLink.wsHandler.send_to_both_players() #send to both players msg about goal
+                    
+
                elif goal_status == GoalStatus.Player2Scored:
                     self.gamestate.score.second =  self.gamestate.score.second + 1
-                    #self.masterLink.wsHandler.send_to_both_players() #send to both players msg about goal
+                    
 
                     #в идеале, можно разделить сообщения на типы, чтобы клиенту было легче их обрабатывать
                     #например - message, error, GameState, GoalStatus
@@ -403,6 +416,11 @@ class InputHandler:
                return None
                
           return tuple(self._history[player_id])
+     
+     
+     def clear_inputs(self):
+          self._history[1].clear()
+          self._history[2].clear()
 
 
 
