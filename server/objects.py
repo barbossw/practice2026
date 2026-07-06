@@ -176,6 +176,8 @@ class GameMaster():
           self.game_running = False          #the game stops at the next iteration
 
           self.gamestate.puck.speed = 0
+
+          self.masterLink.inputHandler.clear_inputs()
           await self.masterLink.wsHandler.send_to_both_players(
                Packet(
                     type= PacketType.MESSAGE,
@@ -189,6 +191,8 @@ class GameMaster():
           self.game_running = False
 
           self.gamestate.puck.speed = 0
+
+          self.masterLink.inputHandler.clear_inputs()
           await self.masterLink.wsHandler.send_to_both_players(
                Packet(
                     type= PacketType.MESSAGE,

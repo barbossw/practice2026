@@ -55,14 +55,14 @@ def calculate_puck_wall_collision(puck : Puck):
 
 def checking_goal(puck : Puck) -> GoalStatus:
     if ((puck.position.second < (DOWN_WALL - PUCK_RADIUS) and  #в нижних воротах
-        puck.position.first >= (LEFT_WALL + PUCK_RADIUS) and
-        puck.position.first <= (RIGHT_WALL - PUCK_RADIUS))
+        puck.position.first >= (GOAL_LEFT + PUCK_RADIUS) and
+        puck.position.first <= (GOAL_RIGHT - PUCK_RADIUS))
         ):
         return GoalStatus.Player2Scored #слать инфу о голе player2
 
     elif ((puck.position.second > (TOP_WALL + PUCK_RADIUS) and  #в верхних воротах
-        puck.position.first >= (LEFT_WALL + PUCK_RADIUS) and
-        puck.position.first <= (RIGHT_WALL - PUCK_RADIUS))
+        puck.position.first >= (GOAL_LEFT + PUCK_RADIUS) and
+        puck.position.first <= (GOAL_RIGHT - PUCK_RADIUS))
         ):
         return GoalStatus.Player1Scored #слать инфу о голе player1
     
