@@ -147,7 +147,7 @@ class GameMaster():
      max_score : float = 5
 
      def __init__(self, master : "Master"):
-          GameState(
+          self.gamestate = GameState(
                player1 = Player(Pair(0,0), 0, Pair(0,0)),
                player2 = Player(Pair(0,0), 0, Pair(0,0)),
                puck = Puck(Pair(0,0), 0, Pair(0,0)),

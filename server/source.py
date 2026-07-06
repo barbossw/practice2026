@@ -83,3 +83,13 @@ async def check_connections():
         "player2_connected" : player2_connected
     }
         
+
+@app.get("/check_inputHandler")
+async def check_inputHandler():
+    master : Master = app.state.master
+    input_handler : InputHandler = master.inputHandler
+
+    return {
+        "get_last_packets(1)" : input_handler.get_last_packets(1),
+        "get_last_packets(2)" : input_handler.get_last_packets(2)
+    }
