@@ -61,3 +61,8 @@ async def websocket_connect(websocket : WebSocket):
 
     except WebSocketDisconnect:
         await web_handler.disconnect(websocket)
+
+
+
+
+#test endpoints

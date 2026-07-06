@@ -138,7 +138,7 @@ class WebSocketHandler:
 class GameMaster():
      gamestate : GameState
      masterLink : "Master"
-     game_running : bool
+     game_running : bool = False
      time_delta : float = 1/60
      max_score : float = 5
 
@@ -150,7 +150,7 @@ class GameMaster():
                score = Pair(0,0)
           )
           self.masterLink = master
-          game_running = False
+          self.game_running = False
 
      def StartGame(self, player1 : Player, player2 : Player):
           self.gamestate.player1 = player1
