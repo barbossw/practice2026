@@ -46,10 +46,26 @@ sends to players:
             }
         },
         "player2": {
-            ...
+             "position": {
+                "first": -100,
+                "second": -50
+            },
+            "speed": 5,
+            "speed_vector": {
+                "first": 0.0,
+                "second": 1.0
+            }
         },
         "puck": {
-            ...
+            "position": {
+                "first": 100,
+                "second": 250
+            },
+            "speed": 5,
+            "speed_vector": {
+                "first": 1.0,
+                "second": 0.0
+            }
         },
         "score": {
             "first": 2,
