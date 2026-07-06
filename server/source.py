@@ -74,7 +74,7 @@ async def check_connections():
     player2_connected = False
     if web_handler.player1 is not None:
         player1_connected = True
-    if web_handler.player2 is not True:
+    if web_handler.player2 is not None:
         player2_connected = True
 
     return {
