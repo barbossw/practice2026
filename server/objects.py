@@ -82,6 +82,8 @@ class WebSocketHandler:
           if (self.status == Status.READY) and (self.masterLink.gameMaster.game_running is False):
                self.masterLink.gameMaster.StartGame(player1 = Player(Pair(0,0), 0, Pair(0,0)), 
                                                   player2 = Player(Pair(0,0), 0, Pair(0,0)))
+               
+          print("WebSocket connected")
           return True
 
 
@@ -92,6 +94,8 @@ class WebSocketHandler:
                     self.player1 = None
                elif websocket is self.player2:
                     self.player2 = None
+
+          print("WebSocket disconnected")
 
           self.status = Status(self.number_of_connected_players())
           if (self.status is not Status.READY) and (self.masterLink.gameMaster.game_running is True):
