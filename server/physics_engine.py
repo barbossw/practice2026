@@ -44,27 +44,90 @@ def calculate_player_puck_collision(player : Player, puck : Puck):
 def calculate_puck_wall_collision(puck : Puck):
     puck_speed_vector = puck.speed_vector * puck.speed
     new_puck_speed_vector =  puck_speed_vector
+
+    #левая стенка
     if ((puck.position.first <= (LEFT_WALL + PUCK_RADIUS)) or           #проверка на коллизию с левой стенкой
         ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or           #проверка нахождения шайбы в воротах + коллизия с их левой стенкой
           puck.position.second <= (DOWN_WALL + PUCK_RADIUS)) and 
-         puck.position.first >= (GOAL_LEFT + PUCK_RADIUS))
-         or
-         ((puck.position.first >= (RIGHT_WALL - PUCK_RADIUS)) or      #проверка на коллизию с правой стенкой
+         puck.position.first >= (GOAL_LEFT + PUCK_RADIUS))):
+        normal_vector_from_wall = Pair(1, 0)
+
+        velocity_along_normal = puck_speed_vector * normal_vector_from_wall
+        if velocity_along_normal < 0:
+
+            overlap_vector = Pair(1,0)
+            overlap = puck.position.first - LEFT_WALL
+            puck.position = puck.position + overlap_vector * overlap
+            
+            new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
+            return new_puck_speed_vector
+
+
+        
+    #правая стенка
+    elif  ((puck.position.first >= (RIGHT_WALL - PUCK_RADIUS)) or      #проверка на коллизию с правой стенкой
           ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or         #проверка на нахождение шайбы в воротах + коллизия с их правой стенкой
           puck.position.second <= (DOWN_WALL + PUCK_RADIUS)) and 
-         puck.position.first <= (GOAL_RIGHT - PUCK_RADIUS)))):
+         puck.position.first <= (GOAL_RIGHT - PUCK_RADIUS))):
+        
         normal_vector_from_wall = Pair(1, 0)
-        new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
 
-    elif ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or          #проверка на коллизию с горизонтальными стенками возле ворот
-           puck.position.second <= (DOWN_WALL + PUCK_RADIUS)) and 
+        
+        velocity_along_normal = puck_speed_vector * normal_vector_from_wall
+        if velocity_along_normal < 0:
+            
+            overlap_vector = Pair(-1, 0)
+            overlap = RIGHT_WALL - puck.position.first
+            puck.position = puck.position + overlap_vector * overlap
+
+            
+            new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
+            return new_puck_speed_vector
+        
+        
+
+
+
+    #верхняя стенка ворот
+    elif ((puck.position.second >= (TOP_WALL - PUCK_RADIUS)) and   #проверка на коллизию с горизонтальными стенками возле ворот
 
           (puck.position.first <= (GOAL_LEFT + PUCK_RADIUS) or 
            puck.position.first >= (GOAL_RIGHT - PUCK_RADIUS))):
+        
         normal_vector_from_wall = Pair(0, 1)
-        new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
 
-    return new_puck_speed_vector
+        velocity_along_normal = puck_speed_vector * normal_vector_from_wall
+        if velocity_along_normal < 0:
+
+            overlap_vector = Pair(0, -1)
+            overlap = TOP_WALL - puck.position.second
+            puck.position = puck.position + overlap_vector * overlap
+
+            
+            new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
+            return new_puck_speed_vector
+
+    #нижняя стенка ворот
+    elif (puck.position.second <= (DOWN_WALL + PUCK_RADIUS)
+          and
+          (puck.position.first <= (GOAL_LEFT + PUCK_RADIUS)
+           or
+           puck.position.first >= (GOAL_RIGHT - PUCK_RADIUS))):
+        
+        normal_vector_from_wall = Pair(0, 1)
+        
+        velocity_along_normal = puck_speed_vector * normal_vector_from_wall
+        if velocity_along_normal < 0:
+
+            overlap_vector = Pair(0, 1)
+            overlap = puck.position.second - DOWN_WALL
+            puck.position = puck.position + overlap_vector * overlap
+
+            new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
+            return new_puck_speed_vector
+        
+
+    return puck_speed_vector
 
 
 def checking_goal(puck : Puck) -> GoalStatus:
