@@ -143,7 +143,7 @@ class GameMaster():
      gamestate : GameState
      masterLink : "Master"
      game_running : bool = False
-     time_delta : float = 1/60
+     time_delta : float = 1/120
      max_score : float = 5
 
      def __init__(self, master : "Master"):
