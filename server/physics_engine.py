@@ -36,8 +36,8 @@ def calculate_puck_wall_collision(puck : Puck):
          puck.position.first <= (GOAL_LEFT + PUCK_RADIUS))
          or
          ((puck.position.first >= (RIGHT_WALL - PUCK_RADIUS)) or      #проверка на коллизию с правой стенкой
-          ((puck.position.second <= (TOP_WALL - PUCK_RADIUS) or         #проверка на нахождение шайбы в воротах + коллизия с их правой стенкой
-          puck.position.second >= (DOWN_WALL + PUCK_RADIUS)) and 
+          ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or         #проверка на нахождение шайбы в воротах + коллизия с их правой стенкой
+          puck.position.second <= (DOWN_WALL + PUCK_RADIUS)) and 
          puck.position.first >= (GOAL_RIGHT - PUCK_RADIUS)))):
         normal_vector_from_wall = Pair(1, 0)
         new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
