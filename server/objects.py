@@ -132,6 +132,15 @@ class WebSocketHandler:
                successfully_sent = False
           
           return successfully_sent
+     
+
+     async def clear_connections(self):
+          if isinstance(self.player1, WebSocket):
+               await self.player1.close()
+               self.player1 = None
+          if isinstance(self.player2, WebSocket):
+               await self.player2.close()
+               self.player2 = None
 
           
           
@@ -178,6 +187,8 @@ class GameMaster():
           self.gamestate.puck.speed = 0
 
           self.masterLink.inputHandler.clear_inputs()
+          await self.masterLink.wsHandler.clear_connections()
+
           await self.masterLink.wsHandler.send_to_both_players(
                Packet(
                     type= PacketType.MESSAGE,
@@ -193,6 +204,8 @@ class GameMaster():
           self.gamestate.puck.speed = 0
 
           self.masterLink.inputHandler.clear_inputs()
+          await self.masterLink.wsHandler.clear_connections()
+          
           await self.masterLink.wsHandler.send_to_both_players(
                Packet(
                     type= PacketType.MESSAGE,
@@ -267,11 +280,6 @@ class GameMaster():
 
      def update_puck_data(self):
           
-          if (self.gamestate.puck.speed - PUCK_FRICTION) > 0:
-               self.gamestate.puck.speed = self.gamestate.puck.speed - PUCK_FRICTION
-          else:
-               self.gamestate.puck.speed = 0
-
 
           self.gamestate.puck.position = self.gamestate.puck.position + self.gamestate.puck.speed_vector * self.gamestate.puck.speed  #обновляем позицию шайбы
           
@@ -287,6 +295,13 @@ class GameMaster():
           self.gamestate.puck.speed_vector = calculate_player_puck_collision(self.gamestate.player2, self.gamestate.puck)                        #чекаем коллизию шайбы и player2 и обновляем вектор скорости
           self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length() 
           self.gamestate.puck.speed_vector = normalize_vector(self.gamestate.puck.speed_vector)
+
+          if (self.gamestate.puck.speed - PUCK_FRICTION) > 0:
+               self.gamestate.puck.speed = self.gamestate.puck.speed - PUCK_FRICTION
+          else:
+               self.gamestate.puck.speed = 0
+
+
 
           if self.gamestate.puck.speed > SPEED_LIMIT:
                self.gamestate.puck.speed = SPEED_LIMIT
