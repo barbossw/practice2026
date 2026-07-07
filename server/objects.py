@@ -330,11 +330,11 @@ class GameMaster():
 
                if goal_status == GoalStatus.Player1Scored:
                     self.gamestate.score.first =  self.gamestate.score.first + 1
-                    
+                    self.reset_after_goal()
 
                elif goal_status == GoalStatus.Player2Scored:
                     self.gamestate.score.second =  self.gamestate.score.second + 1
-                    
+                    self.reset_after_goal()
 
                     #в идеале, можно разделить сообщения на типы, чтобы клиенту было легче их обрабатывать
                     #например - message, error, GameState, GoalStatus
