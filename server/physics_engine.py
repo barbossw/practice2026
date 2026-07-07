@@ -4,8 +4,12 @@ import math
 
 
 def calculate_player_puck_collision(player : Player, puck : Puck):
-    if math.hypot(player.position.first - puck.position.first,
-                  player.position.second - puck.position.second) <= PLAYER_RADIUS + PUCK_RADIUS:
+    distance = math.hypot(
+        player.position.first - puck.position.first,
+        player.position.second - puck.position.second
+        )
+
+    if distance < PLAYER_RADIUS + PUCK_RADIUS:
         player_speed = player.speed_vector * player.speed
         puck_speed = puck.speed_vector * puck.speed
 
@@ -14,14 +18,24 @@ def calculate_player_puck_collision(player : Player, puck : Puck):
 
         puck_speed_relative = puck_speed - player_speed
         normal_vector = puck.position - player.position
+        if(normal_vector.length() == 0):
+            return puck_speed
+
         normal_vector_unit = normal_vector * (1/normal_vector.length())
 
-        puck_speed_relative_reflected = (puck_speed_relative - normal_vector_unit * ( 2*(puck_speed_relative * normal_vector_unit) ) )
-        puck_speed_reflected = puck_speed_relative_reflected + player_speed
+        velocity_along_normal = puck_speed_relative * normal_vector_unit
+        if velocity_along_normal < 0:
+            puck_speed_relative_reflected = (puck_speed_relative - normal_vector_unit * ( 2*(puck_speed_relative * normal_vector_unit) ) )
+            puck_speed_reflected = puck_speed_relative_reflected + player_speed
 
-        return puck_speed_reflected
-    else:
-        return puck.speed_vector
+            overlap = (PLAYER_RADIUS + PUCK_RADIUS) - distance
+            puck.position = puck.position + normal_vector_unit * overlap
+            
+
+            return puck_speed_reflected
+        
+
+    return puck.speed_vector * puck.speed
     
 
 
