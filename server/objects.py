@@ -280,6 +280,8 @@ class GameMaster():
 
      def update_puck_data(self):
           
+          self.gamestate.puck.position = self.gamestate.puck.position + self.gamestate.puck.speed_vector * self.gamestate.puck.speed  #обновляем позицию шайбы
+
 
           self.gamestate.puck.speed_vector = calculate_puck_wall_collision(self.gamestate.puck)                                                                      #чекаем коллизию шайбы и стены и обновляем вектор скорости
           self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length() 
@@ -293,7 +295,6 @@ class GameMaster():
           self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length() 
           self.gamestate.puck.speed_vector = normalize_vector(self.gamestate.puck.speed_vector)
 
-          self.gamestate.puck.position = self.gamestate.puck.position + self.gamestate.puck.speed_vector * self.gamestate.puck.speed  #обновляем позицию шайбы
 
           if (self.gamestate.puck.speed - PUCK_FRICTION) > 0:
                self.gamestate.puck.speed = self.gamestate.puck.speed - PUCK_FRICTION
