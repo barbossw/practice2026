@@ -377,7 +377,7 @@ class GameMaster():
                     )
           
 
-               if self.gamestate.score.first >= 5 or self.gamestate.score.second >= 5:
+               if self.gamestate.score.first >= self.max_score or self.gamestate.score.second >= self.max_score:
                     await self.EndGameScore()
                
 
