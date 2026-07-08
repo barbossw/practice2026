@@ -61,7 +61,7 @@ def calculate_puck_wall_collision(puck : Puck):
             puck.speed_vector = normalize_vector(new_puck_speed_vector)
 
 
-    if ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or           #проверка нахождения шайбы в воротах + коллизия с их левой стенкой
+    elif ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or           #проверка нахождения шайбы в воротах + коллизия с их левой стенкой
           puck.position.second <= (DOWN_WALL + PUCK_RADIUS)) and 
          puck.position.first <= (GOAL_LEFT + PUCK_RADIUS)):
         normal_vector_from_wall = Pair(1, 0)
@@ -112,7 +112,7 @@ def calculate_puck_wall_collision(puck : Puck):
             puck.speed_vector = normalize_vector(new_puck_speed_vector)
 
     
-    return puck.speed_vector * puck.speed
+    
 
 
 
@@ -131,7 +131,8 @@ def calculate_puck_wall_collision(puck : Puck):
 
             
             new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
-            return new_puck_speed_vector
+            puck.speed = new_puck_speed_vector.length()
+            puck.speed_vector = normalize_vector(new_puck_speed_vector)
 
     #нижняя стенка ворот
     elif (puck.position.second <= (DOWN_WALL + PUCK_RADIUS)
@@ -148,10 +149,11 @@ def calculate_puck_wall_collision(puck : Puck):
             puck.position = Pair(puck.position.first, DOWN_WALL + PUCK_RADIUS)
 
             new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
-            return new_puck_speed_vector
+            puck.speed = new_puck_speed_vector.length()
+            puck.speed_vector = normalize_vector(new_puck_speed_vector)
         
 
-    return puck_speed_vector
+    return puck.speed_vector * puck.speed
 
 
 def checking_goal(puck : Puck) -> GoalStatus:
@@ -193,3 +195,8 @@ def calculate_player_wall_collision(player : Player, player_id : int):
             player.speed_vector.second = 0
 
     return player.speed_vector * player.speed
+
+
+
+def calculate_puck_player_wall_collision(puck : Puck, player : Player):
+    pass
