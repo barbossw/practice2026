@@ -11,10 +11,10 @@ DOWN_WALL = -300.0
 GOAL_LEFT = -100.0
 GOAL_RIGHT = 100.0
 
-SPEED_LIMIT = 1
+SPEED_LIMIT = 20
 
 PUCK_FRICTION = 0.005
-#за 1/60 секунды
+#за 1/120 секунды
 
 
 
