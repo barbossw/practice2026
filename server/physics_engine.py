@@ -182,4 +182,4 @@ def calculate_player_wall_collision(player : Player, player_id : int):
 
             player.speed_vector.second = 0
 
-    return player.speed_vector
+    return player.speed_vector * player.speed
