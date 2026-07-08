@@ -23,16 +23,18 @@ def calculate_player_puck_collision(player : Player, puck : Puck):
 
         normal_vector_unit = normal_vector * (1/normal_vector.length())
 
+        overlap = (PLAYER_RADIUS + PUCK_RADIUS) - distance
+        puck.position = puck.position + normal_vector_unit * overlap
+
         velocity_along_normal = puck_speed_relative * normal_vector_unit
         if velocity_along_normal < 0:
             puck_speed_relative_reflected = (puck_speed_relative - normal_vector_unit * ( 2*(puck_speed_relative * normal_vector_unit) ) )
             puck_speed_reflected = puck_speed_relative_reflected + player_speed
-
-            overlap = (PLAYER_RADIUS + PUCK_RADIUS) - distance
-            puck.position = puck.position + normal_vector_unit * overlap
+            return puck_speed_reflected
+       
             
 
-            return puck_speed_reflected
+        
         
 
     return puck.speed_vector * puck.speed
