@@ -229,12 +229,12 @@ class GameMaster():
           self.gamestate.player1.speed_vector = normalize_vector(self.gamestate.player1.speed_vector)
 
           #проверка на превышение скорости перед рассчетом позиции
-          if self.gamestate.player1.speed <= SPEED_LIMIT:
+          if self.gamestate.player1.speed <= PLAYER_SPEED_LIMIT:
                self.gamestate.player1.position = Pair(last_two_packets_for_player1[1].first, last_two_packets_for_player1[1].second)
                   #обновляем позицию player1
           else:
-               self.gamestate.player1.position = self.gamestate.player1.position + (self.gamestate.player1.speed_vector * SPEED_LIMIT)
-               self.gamestate.player1.speed = SPEED_LIMIT
+               self.gamestate.player1.position = self.gamestate.player1.position + (self.gamestate.player1.speed_vector * PLAYER_SPEED_LIMIT)
+               self.gamestate.player1.speed = PLAYER_SPEED_LIMIT
 
 
           
@@ -244,8 +244,8 @@ class GameMaster():
           self.gamestate.player1.speed = self.gamestate.player1.speed_vector.length()
           self.gamestate.player1.speed_vector = normalize_vector(self.gamestate.player1.speed_vector)
 
-          if self.gamestate.player1.speed > SPEED_LIMIT:
-               self.gamestate.player1.speed = SPEED_LIMIT
+          if self.gamestate.player1.speed > PLAYER_SPEED_LIMIT:
+               self.gamestate.player1.speed = PLAYER_SPEED_LIMIT
 
 
 
@@ -262,19 +262,19 @@ class GameMaster():
           self.gamestate.player2.speed_vector = normalize_vector(self.gamestate.player2.speed_vector)
 
           #проверка на превышение скорости перед рассчетом позиции
-          if self.gamestate.player2.speed <= SPEED_LIMIT:
+          if self.gamestate.player2.speed <= PLAYER_SPEED_LIMIT:
                self.gamestate.player2.position = Pair(last_two_packets_for_player2[1].first, last_two_packets_for_player2[1].second)
                     #обновляем позицию player2
           else:
-               self.gamestate.player2.position = self.gamestate.player2.position + (self.gamestate.player2.speed_vector * SPEED_LIMIT)
+               self.gamestate.player2.position = self.gamestate.player2.position + (self.gamestate.player2.speed_vector * PLAYER_SPEED_LIMIT)
           
 
           self.gamestate.player2.speed_vector = calculate_player_wall_collision(self.gamestate.player2, 2)                      #чекаем коллизию player2 и стен
           self.gamestate.player2.speed = self.gamestate.player2.speed_vector.length() 
           self.gamestate.player2.speed_vector = normalize_vector(self.gamestate.player2.speed_vector)
 
-          if self.gamestate.player2.speed > SPEED_LIMIT:
-               self.gamestate.player2.speed = SPEED_LIMIT
+          if self.gamestate.player2.speed > PLAYER_SPEED_LIMIT:
+               self.gamestate.player2.speed = PLAYER_SPEED_LIMIT
 
 
 
@@ -303,8 +303,8 @@ class GameMaster():
 
 
 
-          if self.gamestate.puck.speed > SPEED_LIMIT:
-               self.gamestate.puck.speed = SPEED_LIMIT
+          if self.gamestate.puck.speed > PUCK_SPEED_LIMIT:
+               self.gamestate.puck.speed = PUCK_SPEED_LIMIT
 
 
      def reset_after_goal(self):
