@@ -61,6 +61,9 @@ async def websocket_connect(websocket : WebSocket):
 
     except WebSocketDisconnect:
         await web_handler.disconnect(websocket)
+    except Exception:
+        await web_handler.disconnect(websocket)
+        print("Unexpected exception caught")
 
 
 

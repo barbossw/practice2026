@@ -283,19 +283,24 @@ class GameMaster():
           
           self.gamestate.puck.position = self.gamestate.puck.position + self.gamestate.puck.speed_vector * self.gamestate.puck.speed  #обновляем позицию шайбы
 
-
-          self.gamestate.puck.speed_vector = calculate_puck_wall_collision(self.gamestate.puck)                                                                      #чекаем коллизию шайбы и стены и обновляем вектор скорости
-          self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length() 
-          self.gamestate.puck.speed_vector = normalize_vector(self.gamestate.puck.speed_vector)
-
+          #player1 collision
           self.gamestate.puck.speed_vector = calculate_player_puck_collision(self.gamestate.player1, self.gamestate.puck)                                  #чекаем коллизию шайбы и player1 и обновляем вектор скорости
           self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length() 
           self.gamestate.puck.speed_vector = normalize_vector(self.gamestate.puck.speed_vector)
-
+          
+          #player2 collision
           self.gamestate.puck.speed_vector = calculate_player_puck_collision(self.gamestate.player2, self.gamestate.puck)                        #чекаем коллизию шайбы и player2 и обновляем вектор скорости
           self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length() 
           self.gamestate.puck.speed_vector = normalize_vector(self.gamestate.puck.speed_vector)
 
+          #wall collision
+          self.gamestate.puck.speed_vector = calculate_puck_wall_collision(self.gamestate.puck)                                                                      #чекаем коллизию шайбы и стены и обновляем вектор скорости
+          self.gamestate.puck.speed = self.gamestate.puck.speed_vector.length() 
+          self.gamestate.puck.speed_vector = normalize_vector(self.gamestate.puck.speed_vector)
+
+
+          if self.gamestate.puck.speed > PUCK_SPEED_LIMIT:
+               self.gamestate.puck.speed = PUCK_SPEED_LIMIT
 
           if (self.gamestate.puck.speed - PUCK_FRICTION) > 0:
                self.gamestate.puck.speed = self.gamestate.puck.speed - PUCK_FRICTION
@@ -303,9 +308,6 @@ class GameMaster():
                self.gamestate.puck.speed = 0
 
 
-
-          if self.gamestate.puck.speed > PUCK_SPEED_LIMIT:
-               self.gamestate.puck.speed = PUCK_SPEED_LIMIT
 
 
      def reset_after_goal(self):

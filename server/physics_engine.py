@@ -1,4 +1,4 @@
-from models import Pair, Player, Puck, GoalStatus
+from models import Pair, Player, Puck, GoalStatus, normalize_vector
 from constants import*
 import math
 
@@ -19,7 +19,7 @@ def calculate_player_puck_collision(player : Player, puck : Puck):
         puck_speed_relative = puck_speed - player_speed
         normal_vector = puck.position - player.position
         if(normal_vector.length() == 0):
-            return puck_speed
+            normal_vector = Pair(0, 1)
 
         normal_vector_unit = normal_vector * (1/normal_vector.length())
 
@@ -57,9 +57,11 @@ def calculate_puck_wall_collision(puck : Puck):
             puck.position = Pair(LEFT_WALL + PUCK_RADIUS, puck.position.second)
             
             new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
-            return new_puck_speed_vector
+            puck.speed = new_puck_speed_vector.length()
+            puck.speed_vector = normalize_vector(new_puck_speed_vector)
 
-    elif ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or           #проверка нахождения шайбы в воротах + коллизия с их левой стенкой
+
+    if ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or           #проверка нахождения шайбы в воротах + коллизия с их левой стенкой
           puck.position.second <= (DOWN_WALL + PUCK_RADIUS)) and 
          puck.position.first <= (GOAL_LEFT + PUCK_RADIUS)):
         normal_vector_from_wall = Pair(1, 0)
@@ -70,8 +72,10 @@ def calculate_puck_wall_collision(puck : Puck):
             puck.position = Pair(GOAL_LEFT + PUCK_RADIUS, puck.position.second)
             
             new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
-            return new_puck_speed_vector
+            puck.speed = new_puck_speed_vector.length()
+            puck.speed_vector = normalize_vector(new_puck_speed_vector)
         
+
     #правая стенка
     if  puck.position.first >= (RIGHT_WALL - PUCK_RADIUS):     #проверка на коллизию с правой стенкой
           
@@ -86,9 +90,11 @@ def calculate_puck_wall_collision(puck : Puck):
 
             
             new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
-            return new_puck_speed_vector
+            puck.speed = new_puck_speed_vector.length()
+            puck.speed_vector = normalize_vector(new_puck_speed_vector)
+
         
-    elif ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or         #проверка на нахождение шайбы в воротах + коллизия с их правой стенкой
+    if ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or         #проверка на нахождение шайбы в воротах + коллизия с их правой стенкой
           puck.position.second <= (DOWN_WALL + PUCK_RADIUS)) and 
          puck.position.first >= (GOAL_RIGHT - PUCK_RADIUS)):
         normal_vector_from_wall = Pair(-1, 0)
@@ -102,7 +108,11 @@ def calculate_puck_wall_collision(puck : Puck):
 
             
             new_puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
-            return new_puck_speed_vector
+            puck.speed = new_puck_speed_vector.length()
+            puck.speed_vector = normalize_vector(new_puck_speed_vector)
+
+    
+    return puck.speed_vector * puck.speed
 
 
 
