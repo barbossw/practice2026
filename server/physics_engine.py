@@ -46,6 +46,47 @@ def calculate_player_puck_collision(player : Player, puck : Puck):
 def calculate_puck_wall_collision(puck : Puck):
     puck_speed_vector = puck.speed_vector * puck.speed
 
+    horizontal_wall_collision = False
+
+
+    
+    #верхняя стенка ворот
+    if ((puck.position.second >= (TOP_WALL - PUCK_RADIUS)) and   #проверка на коллизию с горизонтальными стенками возле ворот
+
+          (puck.position.first <= (GOAL_LEFT + PUCK_RADIUS) or 
+           puck.position.first >= (GOAL_RIGHT - PUCK_RADIUS))):
+        
+        normal_vector_from_wall = Pair(0, -1)
+
+        velocity_along_normal = puck_speed_vector * normal_vector_from_wall
+        if velocity_along_normal < 0:
+
+            puck.position = Pair(puck.position.first, TOP_WALL - PUCK_RADIUS)
+
+            horizontal_wall_collision = True
+            
+            puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
+            
+
+    #нижняя стенка ворот
+    elif (puck.position.second <= (DOWN_WALL + PUCK_RADIUS)
+          and
+          (puck.position.first <= (GOAL_LEFT + PUCK_RADIUS)
+           or
+           puck.position.first >= (GOAL_RIGHT - PUCK_RADIUS))):
+        
+        normal_vector_from_wall = Pair(0, 1)
+        
+        velocity_along_normal = puck_speed_vector * normal_vector_from_wall
+        if velocity_along_normal < 0:
+
+            puck.position = Pair(puck.position.first, DOWN_WALL + PUCK_RADIUS)
+
+            horizontal_wall_collision = True
+
+            puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
+
+
     #левая стенка
     if puck.position.first <= (LEFT_WALL + PUCK_RADIUS):      #проверка на коллизию с левой стенкой
         normal_vector_from_wall = Pair(1, 0)
@@ -59,9 +100,12 @@ def calculate_puck_wall_collision(puck : Puck):
             
 
 
-    elif ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or           #проверка нахождения шайбы в воротах + коллизия с их левой стенкой
+    elif (
+        (puck.position.second >= (TOP_WALL - PUCK_RADIUS) or           #проверка нахождения шайбы в воротах + коллизия с их левой стенкой
           puck.position.second <= (DOWN_WALL + PUCK_RADIUS)) and 
-         puck.position.first <= (GOAL_LEFT + PUCK_RADIUS)):
+         puck.position.first <= (GOAL_LEFT + PUCK_RADIUS)  and 
+         horizontal_wall_collision == False
+         ):
         normal_vector_from_wall = Pair(1, 0)
 
         velocity_along_normal = puck_speed_vector * normal_vector_from_wall
@@ -90,9 +134,12 @@ def calculate_puck_wall_collision(puck : Puck):
             
 
         
-    elif ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or         #проверка на нахождение шайбы в воротах + коллизия с их правой стенкой
+    elif (
+        ((puck.position.second >= (TOP_WALL - PUCK_RADIUS) or         #проверка на нахождение шайбы в воротах + коллизия с их правой стенкой
           puck.position.second <= (DOWN_WALL + PUCK_RADIUS)) and 
-         puck.position.first >= (GOAL_RIGHT - PUCK_RADIUS)):
+         puck.position.first >= (GOAL_RIGHT - PUCK_RADIUS)) and 
+         horizontal_wall_collision == False
+         ):
         normal_vector_from_wall = Pair(-1, 0)
 
         
@@ -109,38 +156,6 @@ def calculate_puck_wall_collision(puck : Puck):
     
     
 
-    #верхняя стенка ворот
-    if ((puck.position.second >= (TOP_WALL - PUCK_RADIUS)) and   #проверка на коллизию с горизонтальными стенками возле ворот
-
-          (puck.position.first <= (GOAL_LEFT + PUCK_RADIUS) or 
-           puck.position.first >= (GOAL_RIGHT - PUCK_RADIUS))):
-        
-        normal_vector_from_wall = Pair(0, -1)
-
-        velocity_along_normal = puck_speed_vector * normal_vector_from_wall
-        if velocity_along_normal < 0:
-
-            puck.position = Pair(puck.position.first, TOP_WALL - PUCK_RADIUS)
-
-            
-            puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
-            
-
-    #нижняя стенка ворот
-    elif (puck.position.second <= (DOWN_WALL + PUCK_RADIUS)
-          and
-          (puck.position.first <= (GOAL_LEFT + PUCK_RADIUS)
-           or
-           puck.position.first >= (GOAL_RIGHT - PUCK_RADIUS))):
-        
-        normal_vector_from_wall = Pair(0, 1)
-        
-        velocity_along_normal = puck_speed_vector * normal_vector_from_wall
-        if velocity_along_normal < 0:
-
-            puck.position = Pair(puck.position.first, DOWN_WALL + PUCK_RADIUS)
-
-            puck_speed_vector = puck_speed_vector - normal_vector_from_wall * (puck_speed_vector * normal_vector_from_wall) * 2
             
 
     return puck_speed_vector
