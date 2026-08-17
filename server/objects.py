@@ -55,6 +55,9 @@ class InputPacket(BaseModel):
      position : Position
 
 
+
+
+
 class WebSocketHandler:
      player1 : WebSocket | None
      player2 : WebSocket | None
@@ -163,7 +166,7 @@ class WebSocketHandler:
 class GameMaster():
      gamestate : GameState
      masterLink : "Master"
-     game_running : bool = False
+     game_running : bool 
      time_delta : float = 1/120
      max_score : float = 5
 
@@ -466,6 +469,40 @@ class InputHandler:
      def clear_inputs(self):
           self._history[1].clear()
           self._history[2].clear()
+
+
+
+
+#начальная версия подбора
+#без режимов( пока что )
+#перепроверить (!!)
+
+#статичный массив объектов - под конец игры сам wsHandler и inputHandler почистят себя так что должно работать
+#не идеальный систем дизайн но мне оч лень
+class MatchMaker:
+     master_pool : list[Master]
+     max_games : int = 3
+
+     def __init__(self):
+          self.master_pool  = [Master() for _ in range(0, self.max_games)]
+          self.lock = asyncio.Lock()
+
+
+     async def connect(self, websocket : WebSocket):
+          async with self.lock:
+               for master in self.master_pool:
+                    if master.wsHandler.status is not Status.READY:
+                         connected = await master.wsHandler.connect(websocket)
+                         if connected:
+                              return connected, master
+               return False, None                       
+                         
+
+
+
+
+     
+
 
 
 

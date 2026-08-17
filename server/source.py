@@ -1,12 +1,12 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from contextlib import asynccontextmanager
-from objects import WebSocketHandler, InputHandler, Master
+from objects import WebSocketHandler, InputHandler, Master, MatchMaker
 
 
 
 @asynccontextmanager
 async def lifespan_func(app : FastAPI):
-    app.state.master = Master()
+    app.state.match_maker = MatchMaker()
 
 
     yield
@@ -34,16 +34,19 @@ def root():
     }
 }"""
 
+
+
 @app.websocket("/ws_connect")
 async def websocket_connect(websocket : WebSocket):
 
-    master : Master =  websocket.app.state.master
-    web_handler : WebSocketHandler = master.wsHandler
-    input_handler : InputHandler = master.inputHandler
+    match_maker : MatchMaker = app.state.match_maker
 
-    accepted = await web_handler.connect(websocket)
+    accepted, master = await match_maker.connect(websocket)
     if not accepted:
         return 
+
+    web_handler : WebSocketHandler = master.wsHandler
+    input_handler : InputHandler = master.inputHandler
 
     try:
         while True:
