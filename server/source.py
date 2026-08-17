@@ -48,15 +48,20 @@ async def websocket_connect(websocket : WebSocket):
     try:
         while True:
             data = await websocket.receive_json()
+
+            input_packet = input_handler.verify_packet(data)
+            if input_packet is None:
+                return
+            
             if websocket is web_handler.player1:
                 #process for player 1 here
-                input_handler.store_packet(1, data)
+                input_handler.store_packet(1, input_packet)
 
             elif websocket is web_handler.player2:
                 #process for player 2 here - invert across (0,0)
-                data["position"]["x"] *= -1
-                data["position"]["y"] *= -1
-                input_handler.store_packet(2, data)
+                input_packet.position.x *= -1
+                input_packet.position.y *= -1
+                input_handler.store_packet(2, input_packet)
 
 
     except WebSocketDisconnect:

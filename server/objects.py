@@ -1,4 +1,5 @@
 from dataclasses import dataclass, asdict
+from pydantic import BaseModel, ValidationError
 from fastapi import WebSocket, WebSocketDisconnect
 from enum import IntEnum, StrEnum
 from constants import *
@@ -30,7 +31,8 @@ class Status(IntEnum):
      READY = 2
 
 
-class PacketType(StrEnum):
+
+class OutputPacketType(StrEnum):
      GAME_STATE = "GameState"
      MESSAGE = "Message"
      ERROR = "Error"
@@ -38,9 +40,19 @@ class PacketType(StrEnum):
 
 
 @dataclass
-class Packet:
-     type : PacketType
+class OutputPacket:
+     type : OutputPacketType
      data : dict | str
+
+
+
+class Position(BaseModel):
+     x : float
+     y : float
+
+
+class InputPacket(BaseModel):
+     position : Position
 
 
 class WebSocketHandler:
@@ -106,20 +118,20 @@ class WebSocketHandler:
 
      #message data type - dict
      #need to serialize GameState to dict with asdict(game_state)
-     async def send_to_player1(self, packet : Packet):
+     async def send_to_player1(self, packet : OutputPacket):
           if isinstance(self.player1, WebSocket):
                await self.player1.send_json(asdict(packet))
           else:
                raise RuntimeError("Player 1 is not connected. Trying to send a message with no connection")          
 
-     async def send_to_player2(self, packet : Packet):
+     async def send_to_player2(self, packet : OutputPacket):
           if isinstance(self.player2, WebSocket):
                #reverse data across the (0,0) coordinate here
                await self.player2.send_json(asdict(packet))
           else:
                raise RuntimeError("Player 2 is not connected. Trying to send a message with no connection")     
      
-     async def send_to_both_players(self, packet : Packet):
+     async def send_to_both_players(self, packet : OutputPacket):
           successfully_sent = True
           if isinstance(self.player1, WebSocket):
                await self.player1.send_json(asdict(packet))
@@ -190,8 +202,8 @@ class GameMaster():
           await self.masterLink.wsHandler.clear_connections()
 
           await self.masterLink.wsHandler.send_to_both_players(
-               Packet(
-                    type= PacketType.MESSAGE,
+               OutputPacket(
+                    type= OutputPacketType.MESSAGE,
                     data = "one of the players disconnected. the game stops now"
                     )
           )
@@ -207,8 +219,8 @@ class GameMaster():
           await self.masterLink.wsHandler.clear_connections()
           
           await self.masterLink.wsHandler.send_to_both_players(
-               Packet(
-                    type= PacketType.MESSAGE,
+               OutputPacket(
+                    type= OutputPacketType.MESSAGE,
                     data= "max_score reached. the game stops now"
                )
           )#отправляем месседж
@@ -344,8 +356,8 @@ class GameMaster():
 
                #send packets here
                await self.masterLink.wsHandler.send_to_player1(
-                    Packet(
-                         type= PacketType.GAME_STATE,
+                    OutputPacket(
+                         type= OutputPacketType.GAME_STATE,
                          data= asdict(self.gamestate)
                     )
                     ) #player 1
@@ -374,8 +386,8 @@ class GameMaster():
                )
 
                await self.masterLink.wsHandler.send_to_player2(
-                    Packet(
-                         type= PacketType.GAME_STATE,
+                    OutputPacket(
+                         type= OutputPacketType.GAME_STATE,
                          data= asdict(gamestate_copy_reversed)
                     )
                     )
@@ -413,6 +425,16 @@ class InputHandler:
                1 : deque(maxlen = 2),
                2 : deque(maxlen = 2)
           }
+
+
+
+     def verify_packet(self, data) -> InputPacket | None :
+          try:
+               input_packet = InputPacket.model_validate(data)
+               return input_packet
+          except ValidationError:
+               return None
+
           
 
 
@@ -425,12 +447,13 @@ class InputHandler:
 # }
 #}
 
-     def store_packet(self, player_id : int, packet_data : dict):
+     def store_packet(self, player_id : int, packet_data : InputPacket):
           self._history[player_id].append(
-               Pair(first = packet_data["position"]["x"],
-                    second = packet_data["position"]["y"])
-               )
-
+               Pair(first = packet_data.position.x,
+                    second = packet_data.position.y
+                    )
+          )
+          
 
 
      def get_last_packets(self, player_id : int):
