@@ -156,6 +156,7 @@ class WebSocketHandler:
           if isinstance(self.player2, WebSocket):
                await self.player2.close()
                self.player2 = None
+          self.Status = Status.NO_PLAYERS
 
           
           
@@ -198,11 +199,7 @@ class GameMaster():
      
      async def EndGameDisconnect(self):
           self.game_running = False          #the game stops at the next iteration
-
           self.gamestate.puck.speed = 0
-
-          self.masterLink.inputHandler.clear_inputs()
-          await self.masterLink.wsHandler.clear_connections()
 
           await self.masterLink.wsHandler.send_to_both_players(
                OutputPacket(
@@ -212,14 +209,13 @@ class GameMaster():
           )
           #отправляем сам месседж
 
+          self.masterLink.inputHandler.clear_inputs()
+          await self.masterLink.wsHandler.clear_connections()
+
 
      async def EndGameScore(self):
           self.game_running = False
-
           self.gamestate.puck.speed = 0
-
-          self.masterLink.inputHandler.clear_inputs()
-          await self.masterLink.wsHandler.clear_connections()
           
           await self.masterLink.wsHandler.send_to_both_players(
                OutputPacket(
@@ -227,6 +223,9 @@ class GameMaster():
                     data= "max_score reached. the game stops now"
                )
           )#отправляем месседж
+
+          self.masterLink.inputHandler.clear_inputs()
+          await self.masterLink.wsHandler.clear_connections()
 
 
 
@@ -338,69 +337,74 @@ class GameMaster():
 
 
      async def gameLoop(self):
+          try:
 
-          while self.game_running:
-               self.update_data_for_player1()     #player1 обновляем
-               self.update_data_for_player2()     #player2 обновляем
-               self.update_puck_data()        #puck обновляем
+               while self.game_running:
+                    self.update_data_for_player1()     #player1 обновляем
+                    self.update_data_for_player2()     #player2 обновляем
+                    self.update_puck_data()        #puck обновляем
 
-               goal_status : GoalStatus = checking_goal(self.gamestate.puck)
+                    goal_status : GoalStatus = checking_goal(self.gamestate.puck)
 
-               if goal_status == GoalStatus.Player1Scored:
-                    self.gamestate.score.first =  self.gamestate.score.first + 1
-                    self.reset_after_goal()
+                    if goal_status == GoalStatus.Player1Scored:
+                         self.gamestate.score.first =  self.gamestate.score.first + 1
+                         self.reset_after_goal()
 
-               elif goal_status == GoalStatus.Player2Scored:
-                    self.gamestate.score.second =  self.gamestate.score.second + 1
-                    self.reset_after_goal()
+                    elif goal_status == GoalStatus.Player2Scored:
+                         self.gamestate.score.second =  self.gamestate.score.second + 1
+                         self.reset_after_goal()
 
-                    #в идеале, можно разделить сообщения на типы, чтобы клиенту было легче их обрабатывать
-                    #например - message, error, GameState, GoalStatus
+                         #в идеале, можно разделить сообщения на типы, чтобы клиенту было легче их обрабатывать
+                         #например - message, error, GameState, GoalStatus
 
-               #send packets here
-               await self.masterLink.wsHandler.send_to_player1(
-                    OutputPacket(
-                         type= OutputPacketType.GAME_STATE,
-                         data= asdict(self.gamestate)
+                    #send packets here
+                    await self.masterLink.wsHandler.send_to_player1(
+                         OutputPacket(
+                              type= OutputPacketType.GAME_STATE,
+                              data= asdict(self.gamestate)
+                         )
+                         ) #player 1
+
+                    #reversing the data for player2
+                    gamestate_copy_reversed = GameState(
+                         player1= Player(
+                              position= self.gamestate.player2.position * -1,
+                              speed= self.gamestate.player2.speed,
+                              speed_vector= self.gamestate.player2.speed_vector * -1
+                         ),
+                         player2= Player(
+                              position= self.gamestate.player1.position * -1,
+                              speed = self.gamestate.player1.speed,
+                              speed_vector= self.gamestate.player1.speed_vector * -1
+                         ),
+                         puck = Puck(
+                              position= self.gamestate.puck.position * -1,
+                              speed= self.gamestate.puck.speed,
+                              speed_vector= self.gamestate.puck.speed_vector * -1
+                         ),
+                         score = Pair(
+                              first= self.gamestate.score.second,
+                              second= self.gamestate.score.first
+                         )
                     )
-                    ) #player 1
 
-               #reversing the data for player2
-               gamestate_copy_reversed = GameState(
-                    player1= Player(
-                         position= self.gamestate.player2.position * -1,
-                         speed= self.gamestate.player2.speed,
-                         speed_vector= self.gamestate.player2.speed_vector * -1
-                    ),
-                    player2= Player(
-                         position= self.gamestate.player1.position * -1,
-                         speed = self.gamestate.player1.speed,
-                         speed_vector= self.gamestate.player1.speed_vector * -1
-                    ),
-                    puck = Puck(
-                         position= self.gamestate.puck.position * -1,
-                         speed= self.gamestate.puck.speed,
-                         speed_vector= self.gamestate.puck.speed_vector * -1
-                    ),
-                    score = Pair(
-                         first= self.gamestate.score.second,
-                         second= self.gamestate.score.first
-                    )
-               )
-
-               await self.masterLink.wsHandler.send_to_player2(
-                    OutputPacket(
-                         type= OutputPacketType.GAME_STATE,
-                         data= asdict(gamestate_copy_reversed)
-                    )
-                    )
+                    await self.masterLink.wsHandler.send_to_player2(
+                         OutputPacket(
+                              type= OutputPacketType.GAME_STATE,
+                              data= asdict(gamestate_copy_reversed)
+                         )
+                         )
           
 
-               if self.gamestate.score.first >= self.max_score or self.gamestate.score.second >= self.max_score:
-                    await self.EndGameScore()
+                    if self.gamestate.score.first >= self.max_score or self.gamestate.score.second >= self.max_score:
+                         await self.EndGameScore()
                
-
-               await asyncio.sleep(self.time_delta)
+                    await asyncio.sleep(self.time_delta)
+          except asyncio.CancelledError:
+               pass
+          except Exception as err:
+               print(f"GameLopp crashed : {err}")
+               self.game_running = False
 
 
 
@@ -489,13 +493,18 @@ class MatchMaker:
 
 
      async def connect(self, websocket : WebSocket):
+          free_master = None
           async with self.lock:
                for master in self.master_pool:
                     if master.wsHandler.status is not Status.READY:
-                         connected = await master.wsHandler.connect(websocket)
-                         if connected:
-                              return connected, master
-               return False, None                       
+                         free_master = master
+                         break
+
+          connected = await free_master.wsHandler.connect(websocket)
+          if connected:
+               return connected, free_master
+          
+          return False, None                       
                          
 
 
