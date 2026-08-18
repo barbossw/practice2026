@@ -1,6 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from contextlib import asynccontextmanager
 from objects import WebSocketHandler, InputHandler, Master, MatchMaker
+from objects import InputPacket, InputPacketType, Position
 
 
 
@@ -26,14 +27,24 @@ def root():
     return {"message" : "server root"}
 
 
-#need to receive data in this format : 
-"""{
-    "position": {
-        "x": 153.2,
-        "y": 421.6
-    }
-}"""
+#expected incoming packets structure (look up class InputPacket):
+"""
+{
+    "type" : "position",
+    "data" : {
+                "x" : 200,
+                "y" : 300
+            }
+}
 
+or
+
+{
+    "type" : "game_mode",
+    "data" : {1}
+}
+
+"""
 
 
 @app.websocket("/ws_connect")
@@ -50,11 +61,15 @@ async def websocket_connect(websocket : WebSocket):
 
     try:
         while True:
-            data = await websocket.receive_json()
+            raw_data = await websocket.receive_json()
+    
+            raw_packet = input_handler.verify_input_packet(raw_data)  #check if the packet matches the schema
+            if (raw_packet is None) or (raw_packet.type is not InputPacketType.POSITION):
+                continue
 
-            input_packet = input_handler.verify_packet(data)
+            input_packet = input_handler.verify_position_packet(raw_packet.data) #check if packet data matches the position schema, otherwise dont process it
             if input_packet is None:
-                return
+                continue
             
             if websocket is web_handler.player1:
                 #process for player 1 here
@@ -62,9 +77,11 @@ async def websocket_connect(websocket : WebSocket):
 
             elif websocket is web_handler.player2:
                 #process for player 2 here - invert across (0,0)
-                input_packet.position.x *= -1
-                input_packet.position.y *= -1
-                input_handler.store_packet(2, input_packet)
+                input_packet_inverted = Position(
+                    x= -input_packet.x, 
+                    y= -input_packet.y
+                    )
+                input_handler.store_packet(2, input_packet_inverted)
 
 
     except WebSocketDisconnect:

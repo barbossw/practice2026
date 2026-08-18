@@ -46,13 +46,23 @@ class OutputPacket:
 
 
 
+@dataclass
+class InputPacketType(StrEnum):
+     POSITION = "position"
+     GAME_MODE = "game_mode"
+
+     
+
+class InputPacket(BaseModel):
+     type : InputPacketType
+     data : dict | str
+
+
+
 class Position(BaseModel):
      x : float
      y : float
 
-
-class InputPacket(BaseModel):
-     position : Position
 
 
 
@@ -435,29 +445,36 @@ class InputHandler:
 
 
 
-     def verify_packet(self, data) -> InputPacket | None :
+     def verify_position_packet(self, data : dict | str) -> Position | None :
           try:
-               input_packet = InputPacket.model_validate(data)
-               return input_packet
+               input_position_packet = Position.model_validate(data)
+               return input_position_packet
           except ValidationError:
                return None
 
+
+     def verify_input_packet(self, raw_data) -> InputPacket | None:
+          try:
+               raw_packet = InputPacket.model_validate(raw_data)
+               return raw_packet
+          except ValidationError:
+               return None
           
 
 
 
 #packet_data MUST look like 
 #{
-# "position": {
+# {
 #     "x": 153.2,
 #     "y": 421.6
 # }
 #}
 
-     def store_packet(self, player_id : int, packet_data : InputPacket):
+     def store_packet(self, player_id : int, packet_data : Position):
           self._history[player_id].append(
-               Pair(first = packet_data.position.x,
-                    second = packet_data.position.y
+               Pair(first = packet_data.x,
+                    second = packet_data.y
                     )
           )
           
