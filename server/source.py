@@ -49,12 +49,26 @@ or
 
 @app.websocket("/ws_connect")
 async def websocket_connect(websocket : WebSocket):
-
+    await websocket.accept()
     match_maker : MatchMaker = app.state.match_maker
+
+    gamemode_packet = await match_maker.acquire_game_mode(websocket) #пока ничего не делает, в матчмейкере не прописаны режимы игры
+    if gamemode_packet is None:
+        websocket.close(
+            code = 1013, #try again later
+            reason= "Did not receive a packet with desired game mode. Try connecting again"
+        )
+        return
+
 
     accepted, master = await match_maker.connect(websocket)
     if not accepted:
+        websocket.close(
+            code=1008, #policy violation
+            reason= "Server is full. Could not find an awailable game room"
+        )
         return 
+    
 
     web_handler : WebSocketHandler = master.wsHandler
     input_handler : InputHandler = master.inputHandler

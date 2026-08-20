@@ -17,19 +17,29 @@ PUCK_SPEED_LIMIT = 6
 PUCK_FRICTION = 0.005
 #за 1/120 секунды
 
+GAMEMODE_HANDSHAKE_TIMEOUT = 5
+
 
 
 """
 note:formarts the server sends / receives:
 
 receive inside /ws_connect endpoint:
+
 {
-    "position": {
-        "x": 153.2,
-        "y": 421.6
-    }
+    "type" : "position",
+    "data" : {
+                "x" : 200,
+                "y" : 300
+            }
 }
 
+or
+
+{
+    "type" : "game_mode",
+    "data" : {1}
+}
 sends to players:
 
 {

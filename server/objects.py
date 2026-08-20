@@ -92,7 +92,6 @@ class WebSocketHandler:
 
 
      async def connect(self, websocket : WebSocket) -> bool:
-          await websocket.accept()
 
           async with self.lock:
                if self.player1 is None:
@@ -100,7 +99,6 @@ class WebSocketHandler:
                elif self.player2 is None:
                     self.player2 = websocket
                else:
-                    await websocket.close()
                     return False
                
           self.status = Status(self.number_of_connected_players())
@@ -509,17 +507,53 @@ class MatchMaker:
           self.lock = asyncio.Lock()
 
 
+
+     async def listen_for_gamemode_packet(self, websocket : WebSocket):
+          while True:
+               try:
+                    raw_packet = await websocket.receive_json()
+
+                    packet = InputPacket.model_validate(raw_packet)
+                    if packet.type is InputPacketType.GAME_MODE:
+                         return packet
+
+               except ValidationError:
+                    continue
+
+
+
+     async def acquire_game_mode(self, websocket : WebSocket) -> InputPacket | None:
+          try:
+               gamemode_packet = await asyncio.wait_for(
+                    self.listen_for_gamemode_packet(websocket),
+                    timeout = GAMEMODE_HANDSHAKE_TIMEOUT
+               )
+               #можно послать сообщение клиенту о получении пакета
+               #то же самое можно реализовать при помещении клиента в игровую комнату и начале игры для лепшай коммуникации сервера и клиента
+               #эти сообщения можно выводить например на чтото типа экрана загрузки на клиенте
+               return gamemode_packet
+
+          except asyncio.TimeoutError:
+               return None
+
+
+
+
+
      async def connect(self, websocket : WebSocket):
           free_master = None
+          master_found = False
           async with self.lock:
                for master in self.master_pool:
                     if master.wsHandler.status is not Status.READY:
                          free_master = master
+                         master_found = True
                          break
 
-          connected = await free_master.wsHandler.connect(websocket)
-          if connected:
-               return connected, free_master
+          if master_found:
+               connected = await free_master.wsHandler.connect(websocket)
+               if connected:
+                    return connected, free_master
           
           return False, None                       
                          
