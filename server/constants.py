@@ -19,6 +19,25 @@ PUCK_FRICTION = 0.005
 
 GAMEMODE_HANDSHAKE_TIMEOUT = 5
 
+DEFAULT_CONFIG : dict = {
+    "PUCK_RADIUS" : 20,
+    "PLAYER_RADIUS" : 50,
+    "MAX_SCORE" : 5
+}
+
+
+#copies of the default - change later according to gamemodes
+CONFIG_GAMEMODE_2 : dict = {
+    "PUCK_RADIUS" : 20,
+    "PLAYER_RADIUS" : 50,
+    "MAX_SCORE" : 5
+}
+
+CONFIG_GAMEMODE_3 : dict = {
+    "PUCK_RADIUS" : 20,
+    "PLAYER_RADIUS" : 50,
+    "MAX_SCORE" : 5
+}
 
 
 """

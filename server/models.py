@@ -64,13 +64,18 @@ class Puck:
     position : Pair
     speed : float
     speed_vector : Pair
+    RADIUS : int
+    
 
-    RADIUS : int = PUCK_RADIUS
-
-    def __init__(self, position : Pair, speed : float, speed_vector : Pair):
+    def __init__(self, 
+                 position : Pair, 
+                 speed : float, 
+                 speed_vector : Pair, 
+                 RADIUS : int = PUCK_RADIUS):
         self.position = position
         self.speed = speed
         self.speed_vector = normalize_vector(speed_vector)
+        self.RADIUS = RADIUS
 
     
 
@@ -82,13 +87,18 @@ class Player:
      position : Pair
      speed : float
      speed_vector : Pair
+     RADIUS : int
+    
 
-     RADIUS = PLAYER_RADIUS
-
-     def __init__(self, position : Pair, speed : float, speed_vector : Pair):
+     def __init__(self, 
+                  position : Pair, 
+                  speed : float, 
+                  speed_vector : Pair, 
+                  RADIUS : int = PLAYER_RADIUS):
           self.position = position
           self.speed = speed
           self.speed_vector = normalize_vector(speed_vector)
+          self.RADIUS = RADIUS
 
 
 

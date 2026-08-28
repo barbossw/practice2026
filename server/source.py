@@ -59,9 +59,10 @@ async def websocket_connect(websocket : WebSocket):
             reason= "Did not receive a packet with desired game mode. Try connecting again"
         )
         return
+    gamemode = gamemode_packet.data
 
 
-    accepted, master = await match_maker.connect(websocket)
+    accepted, master = await match_maker.connect(websocket, gamemode)
     if not accepted:
         websocket.close(
             code=1008, #policy violation
@@ -100,8 +101,10 @@ async def websocket_connect(websocket : WebSocket):
 
     except WebSocketDisconnect:
         await web_handler.disconnect(websocket)
+        websocket.close()
     except Exception:
         await web_handler.disconnect(websocket)
+        websocket.close()
         print("Unexpected exception caught")
 
 

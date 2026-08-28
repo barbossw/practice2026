@@ -3,6 +3,7 @@ from pydantic import BaseModel, ValidationError
 from fastapi import WebSocket, WebSocketDisconnect
 from enum import IntEnum, StrEnum
 from constants import *
+from constants import DEFAULT_CONFIG, CONFIG_GAMEMODE_2, CONFIG_GAMEMODE_3
 from collections import deque
 import asyncio
 
@@ -178,16 +179,38 @@ class GameMaster():
      game_running : bool 
      time_delta : float = 1/120
      max_score : float = 5
+     config : dict
 
-     def __init__(self, master : "Master"):
+
+     def __init__(self, master : "Master", config : dict = DEFAULT_CONFIG):
+          self.config = config
           self.gamestate = GameState(
-               player1 = Player(Pair(0,0), 0, Pair(0,0)),
-               player2 = Player(Pair(0,0), 0, Pair(0,0)),
-               puck = Puck(Pair(0,0), 0, Pair(0,0)),
+               player1 = Player(
+                    position = Pair(0,0), 
+                    speed = 0, 
+                    speed_vector = Pair(0,0),
+                    RADIUS = self.config["PLAYER_RADIUS"]
+                    ),
+               player2 = Player(
+                    position = Pair(0,0), 
+                    speed = 0, 
+                    speed_vector = Pair(0,0),
+                    RADIUS = self.config["PLAYER_RADIUS"]
+                    ),
+               puck = Puck(
+                    position = Pair(0,0), 
+                    speed = 0, 
+                    speed_vector = Pair(0,0),
+                    RADIUS = self.config["PUCK_RADIUS"]
+                    ),
                score = Pair(0,0)
           )
           self.masterLink = master
           self.game_running = False
+          
+
+
+
 
      def StartGame(self, player1 : Player, player2 : Player):
           self.gamestate.player1 = player1
@@ -426,9 +449,15 @@ class Master():
 
 
      def __init__(self):
-          self.gameMaster = GameMaster(self)
-          self.wsHandler = WebSocketHandler(self)
+          self.gameMaster = GameMaster(master = self)
+          self.wsHandler = WebSocketHandler(master = self)
           self.inputHandler = InputHandler()
+
+
+     def __init__(self, config : dict):
+               self.gameMaster = GameMaster(master = self, config = config)
+               self.wsHandler = WebSocketHandler(master = self)
+               self.inputHandler = InputHandler()
 
 
 
@@ -499,12 +528,18 @@ class InputHandler:
 #статичный массив объектов - под конец игры сам wsHandler и inputHandler почистят себя так что должно работать
 #не идеальный систем дизайн но мне оч лень
 class MatchMaker:
-     master_pool : list[Master]
+     master_pool : dict[str, list[Master]]
      max_games : int = 3
 
+     #note - modify this to change gamemodes. include things that have to change between gamemodes inside config in constants.py file
      def __init__(self):
-          self.master_pool  = [Master() for _ in range(0, self.max_games)]
+          self.master_pool  = {
+               "1" : [Master() for _ in range(0, self.max_games)],
+               "2" : [Master(CONFIG_GAMEMODE_2) for _ in range(0, self.max_games)],
+               "3" : [Master(CONFIG_GAMEMODE_3) for _ in range(0, self.max_games)]
+          }
           self.lock = asyncio.Lock()
+
 
 
 
@@ -540,11 +575,15 @@ class MatchMaker:
 
 
 
-     async def connect(self, websocket : WebSocket):
+     async def connect(self, websocket : WebSocket, gamemode : str):
           free_master = None
           master_found = False
           async with self.lock:
-               for master in self.master_pool:
+               master_pool = self.master_pool.get(gamemode)
+               if master_pool is None:
+                    return False, None 
+               
+               for master in master_pool:
                     if master.wsHandler.status is not Status.READY:
                          free_master = master
                          master_found = True
