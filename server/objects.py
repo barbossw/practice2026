@@ -104,8 +104,9 @@ class WebSocketHandler:
                
           self.status = Status(self.number_of_connected_players())
           if (self.status == Status.READY) and (self.masterLink.gameMaster.game_running is False):
-               self.masterLink.gameMaster.StartGame(player1 = Player(Pair(0,0), 0, Pair(0,0)), 
-                                                  player2 = Player(Pair(0,0), 0, Pair(0,0)))
+               self.masterLink.gameMaster.StartGame(player1 = Player(Pair(0,0), 0, Pair(0,0), RADIUS = self.masterLink.gameMaster.config["PLAYER_RADIUS"] ), 
+                                                  player2 = Player(Pair(0,0), 0, Pair(0,0), RADIUS = self.masterLink.gameMaster.config["PLAYER_RADIUS"] )
+                                                  )
                
           print("WebSocket connected")
           return True
@@ -178,12 +179,13 @@ class GameMaster():
      masterLink : "Master"
      game_running : bool 
      time_delta : float = 1/120
-     max_score : float = 5
+     max_score : float
      config : dict
 
 
      def __init__(self, master : "Master", config : dict = DEFAULT_CONFIG):
           self.config = config
+          self.max_score = self.config["MAX_SCORE"]
           self.gamestate = GameState(
                player1 = Player(
                     position = Pair(0,0), 
@@ -219,7 +221,7 @@ class GameMaster():
           self.gamestate.player2 = player2
           self.gamestate.player2.position = Pair(0, TOP_WALL - PLAYER_RADIUS)
 
-          puck = Puck(Pair(0,0), 0, Pair(0,0))
+          puck = Puck(Pair(0,0), 0, Pair(0,0), RADIUS = self.config["PUCK_RADIUS"])
           self.gamestate.puck = puck
 
           self.gamestate.score = Pair(0,0)
@@ -357,9 +359,9 @@ class GameMaster():
 
      def reset_after_goal(self):
           #reset players and puck
-          self.gamestate.player1 = Player(Pair(0, DOWN_WALL + PLAYER_RADIUS), 0, Pair(0,0))
-          self.gamestate.player2 = Player(Pair(0, TOP_WALL - PLAYER_RADIUS), 0, Pair(0,0))
-          self.gamestate.puck = Puck(Pair(0,0), 0, Pair(0,0))
+          self.gamestate.player1 = Player(Pair(0, DOWN_WALL + PLAYER_RADIUS), 0, Pair(0,0), RADIUS= self.config["PLAYER_RADIUS"])
+          self.gamestate.player2 = Player(Pair(0, TOP_WALL - PLAYER_RADIUS), 0, Pair(0,0), RADIUS= self.config["PLAYER_RADIUS"])
+          self.gamestate.puck = Puck(Pair(0,0), 0, Pair(0,0), Pair(0,0), RADIUS= self.config["PUCK_RADIUS"])
 
           self.masterLink.inputHandler.clear_inputs()
 
@@ -401,17 +403,20 @@ class GameMaster():
                          player1= Player(
                               position= self.gamestate.player2.position * -1,
                               speed= self.gamestate.player2.speed,
-                              speed_vector= self.gamestate.player2.speed_vector * -1
+                              speed_vector= self.gamestate.player2.speed_vector * -1,
+                              RADIUS= self.config["PLAYER_RADIUS"]
                          ),
                          player2= Player(
                               position= self.gamestate.player1.position * -1,
                               speed = self.gamestate.player1.speed,
-                              speed_vector= self.gamestate.player1.speed_vector * -1
+                              speed_vector= self.gamestate.player1.speed_vector * -1,
+                              RADIUS= self.config["PLAYER_RADIUS"]
                          ),
                          puck = Puck(
                               position= self.gamestate.puck.position * -1,
                               speed= self.gamestate.puck.speed,
-                              speed_vector= self.gamestate.puck.speed_vector * -1
+                              speed_vector= self.gamestate.puck.speed_vector * -1,
+                              RADIUS= self.config["PUCK_RADIUS"]
                          ),
                          score = Pair(
                               first= self.gamestate.score.second,

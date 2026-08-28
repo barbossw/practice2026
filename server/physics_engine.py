@@ -1,5 +1,5 @@
 from models import Pair, Player, Puck, GoalStatus, normalize_vector
-from constants import*
+from constants import LEFT_WALL, RIGHT_WALL, TOP_WALL, DOWN_WALL, GOAL_LEFT, GOAL_RIGHT
 import math
 
 
@@ -8,6 +8,9 @@ def calculate_player_puck_collision(player : Player, puck : Puck):
         player.position.first - puck.position.first,
         player.position.second - puck.position.second
         )
+    PLAYER_RADIUS = player.RADIUS
+    PUCK_RADIUS = puck.RADIUS
+
 
     if distance < PLAYER_RADIUS + PUCK_RADIUS:
         player_speed = player.speed_vector * player.speed
@@ -44,6 +47,8 @@ def calculate_player_puck_collision(player : Player, puck : Puck):
 
 
 def calculate_puck_wall_collision(puck : Puck):
+    PUCK_RADIUS = puck.RADIUS
+
     puck_speed_vector = puck.speed_vector * puck.speed
 
     horizontal_wall_collision = False
@@ -162,6 +167,8 @@ def calculate_puck_wall_collision(puck : Puck):
 
 
 def checking_goal(puck : Puck) -> GoalStatus:
+    PUCK_RADIUS = puck.RADIUS
+
     if ((puck.position.second < (DOWN_WALL - PUCK_RADIUS) and  #в нижних воротах
         puck.position.first >= (GOAL_LEFT + PUCK_RADIUS) and
         puck.position.first <= (GOAL_RIGHT - PUCK_RADIUS))
@@ -184,6 +191,8 @@ def checking_goal(puck : Puck) -> GoalStatus:
 
 
 def calculate_player_wall_collision(player : Player, player_id : int):
+    PLAYER_RADIUS = player.RADIUS
+    
     if (player.position.first >= RIGHT_WALL - PLAYER_RADIUS or          #коллизия с боковыми стенками обнуления х-вой координаты
         player.position.first <= LEFT_WALL + PLAYER_RADIUS):
 
@@ -202,6 +211,3 @@ def calculate_player_wall_collision(player : Player, player_id : int):
     return player.speed_vector * player.speed
 
 
-
-def calculate_puck_player_wall_collision(puck : Puck, player : Player):
-    pass
