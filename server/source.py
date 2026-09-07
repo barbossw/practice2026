@@ -52,7 +52,7 @@ async def websocket_connect(websocket : WebSocket):
     await websocket.accept()
     match_maker : MatchMaker = app.state.match_maker
 
-    gamemode_packet = await match_maker.acquire_game_mode(websocket) #пока ничего не делает, в матчмейкере не прописаны режимы игры
+    gamemode_packet = await match_maker.acquire_game_mode(websocket) 
     if gamemode_packet is None:
         websocket.close(
             code = 1013, #try again later
@@ -60,6 +60,13 @@ async def websocket_connect(websocket : WebSocket):
         )
         return
     gamemode = gamemode_packet.data
+    if gamemode not in match_maker.master_pool:
+        websocket.close(
+            code=1008, #policy violation
+            reason= "Invalid gamemode chosen. Try connecting again"
+        )
+        return
+    
 
 
     accepted, master = await match_maker.connect(websocket, gamemode)
