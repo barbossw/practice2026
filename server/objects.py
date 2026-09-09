@@ -459,7 +459,7 @@ class Master():
           self.inputHandler = InputHandler()
 
 
-     def __init__(self, config : dict):
+     def __init__(self, config : dict = DEFAULT_CONFIG):
                self.gameMaster = GameMaster(master = self, config = config)
                self.wsHandler = WebSocketHandler(master = self)
                self.inputHandler = InputHandler()
